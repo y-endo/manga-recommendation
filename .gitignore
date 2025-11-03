@@ -1,0 +1,61 @@
+# 環境変数
+.env
+.env.local
+.env.production
+.env.*.local
+
+# ログ
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+*.bak
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+.vscode/settings.json
+
+# Docker
+docker-compose.override.yml
+*.pid
+
+# データベース
+*.db
+*.sqlite
+*.sql.bak
+
+# 一時ファイル
+tmp/
+temp/
+dist/
+build/
+
+# バックエンド (Go)
+backend/tmp/
+backend/main
+backend/*.exe
+backend/*.test
+backend/coverage.out
+
+# フロントエンド (Next.js)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.cache/
+frontend/*.tsbuildinfo
+frontend/next-env.d.ts
+
+# テスト
+coverage/
+.coverage
+
+# セキュリティ
+*.pem
+*.key
+*.crt

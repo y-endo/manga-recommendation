@@ -1,0 +1,83 @@
+version: "3.9"
+
+services:
+  # PostgreSQLデータベース
+  db:
+    image: postgres:16-alpine
+    container_name: manga-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - manga-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Goバックエンド
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../docker/backend/Dockerfile
+    container_name: manga-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      PORT: ${PORT}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ENVIRONMENT: ${ENVIRONMENT}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend:/app
+      - go_modules:/go/pkg/mod
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - manga-network
+
+  # Next.jsフロントエンド
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../docker/frontend/Dockerfile
+      target: development
+    container_name: manga-frontend
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      NODE_ENV: development
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+    networks:
+      - manga-network
+    command: npm run dev
+
+volumes:
+  postgres_data:
+    driver: local
+  go_modules:
+    driver: local
+
+networks:
+  manga-network:
+    driver: bridge
