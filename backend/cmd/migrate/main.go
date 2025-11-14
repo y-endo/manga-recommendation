@@ -3,14 +3,15 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
-	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
 	_ "github.com/lib/pq"
+
+	"github.com/y-endo/manga-recommendation/migrations"
 )
 
 // このファイルの概要:
@@ -18,7 +19,7 @@ import (
 // - 使い方: 環境変数 `DATABASE_URL` に接続文字列を設定してから実行します。
 // - 動作:
 //   1. `schema_migrations` テーブルを作成（適用済みマイグレーションを記録するため）
-//   2. `../../migrations` ディレクトリ内の `.sql` ファイルを名前順に並べる TODO: パスをembedに変更すること
+//   2. `manga-recommendation/migrations` ディレクトリ内の `.sql` ファイルを名前順に並べる
 //   3. まだ適用していないファイルをトランザクション内で実行し、適用済みとして記録する
 // - 初心者向け注意点:
 //   - マイグレーションファイル名は適用順に並ぶようにプレフィックス（例: `001_init.sql`, `002_add_user.sql`）をつけると良い
@@ -47,8 +48,6 @@ func main() {
 	}
 
 	// マイグレーションの適用状況を管理するためのテーブルを作成します。
-	// 重要: マイグレーションファイル名を文字列で保存したいので、version は TEXT 型にしておきます。
-	//       元のコードでは INTEGER になっていましたが、ファイル名は数字以外を含む可能性があるため TEXT が安全です。
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS schema_migrations (
 			version TEXT NOT NULL PRIMARY KEY,
@@ -60,26 +59,21 @@ func main() {
 		log.Fatalf("Failed to create schema_migrations table: %v", err)
 	}
 
-	// マイグレーションファイルを置くディレクトリ（相対パス）
-	dir := "../../migrations"
-
-	// ioutil.ReadDir でディレクトリの内容を読み取ります。
-	// 戻り値はファイル情報のスライスで、ファイルやディレクトリを区別できます。
-	files, err := ioutil.ReadDir(dir)
+	entries, err := migrations.Files.ReadDir(".")
 	if err != nil {
-		log.Fatalf("Failed to read migrations directory: %v", err)
+		log.Fatalf("Failed to read embedded migrations: %v", err)
 	}
 
 	// .sql ファイルだけを収集するためのスライスを用意します。
 	var names []string
-	for _, file := range files {
+	for _, e := range entries {
 		// ディレクトリは無視します。
-		if file.IsDir() {
+		if e.IsDir() {
 			continue
 		}
 		// 拡張子が .sql のものだけを対象にします。
-		if filepath.Ext(file.Name()) == ".sql" {
-			names = append(names, file.Name())
+		if strings.HasSuffix(e.Name(), ".sql") {
+			names = append(names, e.Name())
 		}
 	}
 
@@ -102,8 +96,7 @@ func main() {
 		}
 
 		// マイグレーションファイルを読み込みます。
-		path := filepath.Join(dir, name)
-		b, err := ioutil.ReadFile(path)
+		b, err := migrations.Files.ReadFile(name)
 		if err != nil {
 			log.Fatalf("Failed to read migration file %s: %v", name, err)
 		}
