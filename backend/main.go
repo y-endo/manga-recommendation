@@ -3,15 +3,17 @@ package main
 import (
 	"log"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/y-endo/manga-recommendation/internal/handler"
 )
 
 func main() {
 	// 環境変数の読み込み
-	if err := godotenv.Load(); err != nil {
+	if err := godotenv.Load(".env"); err != nil {
 		log.Println("Warning: .env file not found")
 	}
 
@@ -24,8 +26,8 @@ func main() {
 
 	// CORS設定
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{os.Getenv("ALLOWED_ORIGINS")},
-		AllowMethods: []string{echo.GET, echo.POST, echo.PUT, echo.DELETE},
+		AllowOrigins: strings.Split(os.Getenv("ALLOWED_ORIGINS"), ","),
+		AllowMethods: []string{echo.GET, echo.POST, echo.PUT, echo.DELETE, echo.OPTIONS},
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
 	}))
 
@@ -56,7 +58,7 @@ func setupRoutes(e *echo.Echo) {
 
 	// 認証エンドポイント
 	auth := api.Group("/auth")
-	auth.POST("/register", nil) // TODO: 実装
+	auth.POST("/register", handler.Register)
 	auth.POST("/login", nil)    // TODO: 実装
 
 	// 漫画エンドポイント
