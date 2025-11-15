@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { apiClient } from '@/lib/api-client';
+import { setAuthToken } from '@/lib/auth';
 import type { RegisterRequest, AuthResponse } from '@/types';
 
 export function useRegisterForm() {
@@ -41,9 +42,8 @@ export function useRegisterForm() {
     try {
       const res = await apiClient.post<AuthResponse>('/api/auth/register', payload);
       setMessage('登録に成功しました！');
-      localStorage.setItem('token', res.data.token);
-      // トップページへリダイレクト
-      window.location.href = '/';
+      setAuthToken(res.data.token);
+      window.location.assign('/');
     } catch (error) {
       setMessage('登録に失敗しました。');
       console.error('Registration error:', error);
