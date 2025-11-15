@@ -59,7 +59,7 @@ func setupRoutes(e *echo.Echo) {
 	// 認証エンドポイント
 	auth := api.Group("/auth")
 	auth.POST("/register", handler.Register)
-	auth.POST("/login", nil)    // TODO: 実装
+	auth.POST("/login", handler.Login)
 
 	// 漫画エンドポイント
 	manga := api.Group("/manga")

@@ -19,6 +19,12 @@ type RegisterRequest struct {
 	Username string `json:"username"`
 }
 
+// LoginRequest - ログインリクエストボディ
+type LoginRequest struct {
+	Email string `json:"email"`
+	Password string `json:"password"`
+}
+
 // Register - POST /api/auth/register
 func Register(c echo.Context) error {
 	var req RegisterRequest
@@ -52,6 +58,13 @@ func Register(c echo.Context) error {
 		req.Email, string(hashed), req.Username,
 	).Scan(&id)
 	if err != nil {
+		c.Logger().Errorj(map[string]interface{}{
+			"msg": "failed to insert user",
+			"error": err.Error(),
+			"email": req.Email,
+			"username": req.Username,
+			"password_hash": string(hashed),
+		})
 		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "database insert error"})
 	}
 
@@ -79,5 +92,70 @@ func Register(c echo.Context) error {
 			"token": ss,
 		},
 		"message": "User registered successfully",
+	})
+}
+
+// Login - POST /api/auth/login
+func Login(c echo.Context) error {
+	var req LoginRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "invalid request"})
+	}
+
+	dbURL := os.Getenv("DATABASE_URL")
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "database connection error"})
+	}
+	defer db.Close()
+
+	// ユーザー情報取得
+	var (
+		id string
+		email string
+		username string
+		passwordHash string
+		createdAt time.Time
+	)
+	err = db.QueryRow(
+		"SELECT id, email, username, password_hash, created_at FROM users WHERE email=$1",
+		req.Email,
+	).Scan(&id, &email, &username, &passwordHash, &createdAt)
+	if err == sql.ErrNoRows {
+		// メール or パスワードが違う場合は401エラー
+		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "invalid email or password"})
+	}
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "database query error"})
+	}
+
+	// パスワード検証
+	if err := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(req.Password)); err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "invalid email or password"})
+	}
+
+	// JWT生成
+	secret := os.Getenv("JWT_SECRET")
+	claims := jwt.MapClaims{
+		"user_id": id,
+		"exp": time.Now().Add(24 * time.Hour).Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	ss, err := token.SignedString([]byte(secret))
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "token error"})
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"data": map[string]interface{}{
+			"user": map[string]interface{}{
+				"id": id,
+				"email": email,
+				"username": username,
+				"created_at": createdAt,
+			},
+			"token": ss,
+		},
+		"message": "User logged in successfully",
 	})
 }
