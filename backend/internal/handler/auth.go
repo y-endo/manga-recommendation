@@ -25,6 +25,20 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
+// 署名済みトークンを HttpOnly Cookie として設定
+func setAuthCookie(c echo.Context, token string) {
+	cookie := &http.Cookie{
+		Name:     "auth_token",
+		Value:    token,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   os.Getenv("APP_ENV") == "production",
+		SameSite: http.SameSiteLaxMode,
+		Expires:  time.Now().Add(24 * time.Hour),
+	}
+	c.SetCookie(cookie)
+}
+
 // Register - POST /api/auth/register
 func Register(c echo.Context) error {
 	var req RegisterRequest
@@ -80,16 +94,15 @@ func Register(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "token error"})
 	}
 
-	// レスポンス
+	// Cookie セット (トークンはレスポンスに含めない)
+	setAuthCookie(c, ss)
 	return c.JSON(http.StatusCreated, map[string]interface{}{
 		"data": map[string]interface{}{
 			"user": map[string]interface{}{
 				"id": id,
 				"email": req.Email,
 				"username": req.Username,
-				"created_at": time.Now().UTC(),
 			},
-			"token": ss,
 		},
 		"message": "User registered successfully",
 	})
@@ -115,12 +128,11 @@ func Login(c echo.Context) error {
 		email string
 		username string
 		passwordHash string
-		createdAt time.Time
 	)
 	err = db.QueryRow(
-		"SELECT id, email, username, password_hash, created_at FROM users WHERE email=$1",
+		"SELECT id, email, username, password_hash FROM users WHERE email=$1",
 		req.Email,
-	).Scan(&id, &email, &username, &passwordHash, &createdAt)
+	).Scan(&id, &email, &username, &passwordHash)
 	if err == sql.ErrNoRows {
 		// メール or パスワードが違う場合は401エラー
 		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "invalid email or password"})
@@ -146,16 +158,94 @@ func Login(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "token error"})
 	}
 
+	// Cookie セット
+	setAuthCookie(c, ss)
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"data": map[string]interface{}{
 			"user": map[string]interface{}{
 				"id": id,
 				"email": email,
 				"username": username,
-				"created_at": createdAt,
 			},
-			"token": ss,
 		},
 		"message": "User logged in successfully",
 	})
+}
+
+// Me - GET /api/auth/me
+// Authorization: Bearer <token> からユーザー情報を取得して返す
+func Me(c echo.Context) error {
+	cookie, err := c.Cookie("auth_token")
+	if err != nil || cookie.Value == "" {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "missing auth cookie"})
+	}
+
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "server configuration error"})
+	}
+
+	token, err := jwt.Parse(cookie.Value, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, echo.NewHTTPError(http.StatusUnauthorized, "unexpected signing method")
+		}
+		return []byte(secret), nil
+	})
+	if err != nil || !token.Valid {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "invalid or expired token"})
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "invalid token claims"})
+	}
+	userID, _ := claims["user_id"].(string)
+	if userID == "" {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "invalid token payload"})
+	}
+
+	dbURL := os.Getenv("DATABASE_URL")
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "database connection error"})
+	}
+	defer db.Close()
+
+	var (
+		id string
+		email string
+		username string
+	)
+	err = db.QueryRow(
+		"SELECT id, email, username FROM users WHERE id=$1",
+		userID,
+	).Scan(&id, &email, &username)
+	if err == sql.ErrNoRows {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "user not found"})
+	}
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "database query error"})
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"id": id,
+		"email": email,
+		"username": username,
+	})
+}
+
+// Logout - POST /api/auth/logout
+func Logout(c echo.Context) error {
+	cookie := &http.Cookie{
+		Name:     "auth_token",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   os.Getenv("APP_ENV") == "production",
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   -1,
+		Expires:  time.Unix(0, 0),
+	}
+	c.SetCookie(cookie)
+	return c.JSON(http.StatusOK, map[string]string{"message": "logged out"})
 }

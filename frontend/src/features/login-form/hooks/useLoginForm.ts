@@ -1,13 +1,15 @@
-import { useState } from 'react';
-import { apiClient } from '@/lib/api-client';
-import { setAuthToken } from '@/lib/auth';
-import type { LoginRequest, AuthResponse } from '@/types';
+import { useState, useEffect } from 'react';
+import { useAppDispatch } from '@/store';
+import { useLoginMutation } from '@/store/api/authApi';
+import { setCredentials, clearCredentials } from '@/store/slices/authSlice';
 
 export function useLoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isValid, setIsValid] = useState(false);
   const [message, setMessage] = useState<string | unknown>('');
+  const [login, { data, isLoading, isError, error }] = useLoginMutation();
+  const dispatch = useAppDispatch();
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = event.target;
@@ -33,27 +35,25 @@ export function useLoginForm() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
-    const payload: LoginRequest = {
-      email,
-      password,
-    };
-
-    try {
-      const res = await apiClient.post<AuthResponse>('/api/auth/login', payload);
-      setMessage('ログインに成功しました！');
-      setAuthToken(res.data.token);
-      window.location.assign('/');
-    } catch (error) {
-      setMessage('ログインに失敗しました。メールアドレスまたはパスワードを確認してください。');
-      console.error('Login error:', error);
-    }
+    await login({ email, password });
   };
+
+  useEffect(() => {
+    if (data) {
+      setMessage('ログインに成功しました。');
+      dispatch(setCredentials({ user: data.data.user }));
+      window.location.assign('/');
+    } else if (isError) {
+      setMessage('ログインに失敗しました。');
+      dispatch(clearCredentials());
+    }
+  }, [data, isError, error, dispatch]);
 
   return {
     isValid,
     handleChange,
     handleSubmit,
     message,
+    isLoading,
   };
 }

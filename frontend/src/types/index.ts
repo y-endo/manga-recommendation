@@ -55,8 +55,7 @@ export interface RegisterRequest {
 // 認証レスポンス型
 export interface AuthResponse {
   data: {
-    token: string;
-    user: Omit<User, 'updated_at'>;
+    user: Omit<User, 'created_at' | 'updated_at'>;
   };
   message: string;
 }

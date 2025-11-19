@@ -29,21 +29,3 @@ export const formatRelativeTime = (dateString: string): string => {
 
   return formatDate(dateString);
 };
-
-/**
- * 評価を星の数に変換
- * @param rating - 1-5の評価値
- * @returns 星の文字列
- */
-export const formatRating = (rating: number): string => {
-  return '★'.repeat(rating) + '☆'.repeat(5 - rating);
-};
-
-/**
- * クラス名を結合するヘルパー関数
- * @param classes - クラス名の配列
- * @returns 結合されたクラス名
- */
-export const cn = (...classes: (string | undefined | null | false)[]): string => {
-  return classes.filter(Boolean).join(' ');
-};

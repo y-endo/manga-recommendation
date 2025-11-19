@@ -1,10 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import LogoutButton from '@/components/logout-button';
-import { isAuthenticated } from '@/lib/auth';
+import Button from '@/components/button';
+import { useHeader } from './hooks/useHeader';
 
 export default function Header() {
+  const { initialized, authed, handleLogout } = useHeader();
+
   return (
     <header className="bg-white">
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-8 px-4 sm:px-6 lg:px-8">
@@ -32,32 +34,36 @@ export default function Header() {
           </nav>
 
           <div className="flex items-center gap-4">
-            <ul className="list-none sm:flex sm:gap-4">
-              {isAuthenticated() ? (
-                <li>
-                  <LogoutButton />
-                </li>
-              ) : (
-                <>
+            {initialized && (
+              <ul className="list-none sm:flex sm:gap-4">
+                {authed ? (
                   <li>
-                    <Link
-                      className="block rounded-md bg-teal-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-teal-700"
-                      href="/login"
-                    >
-                      ログイン
-                    </Link>
+                    <Button variant="primary" onClick={handleLogout}>
+                      ログアウト
+                    </Button>
                   </li>
-                  <li>
-                    <Link
-                      className="hidden rounded-md bg-gray-100 px-5 py-2.5 text-sm font-medium text-teal-600 transition hover:text-teal-600/75 sm:block"
-                      href="/register"
-                    >
-                      新規登録
-                    </Link>
-                  </li>
-                </>
-              )}
-            </ul>
+                ) : (
+                  <>
+                    <li>
+                      <Link
+                        className="block rounded-md bg-teal-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-teal-700"
+                        href="/login"
+                      >
+                        ログイン
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        className="hidden rounded-md bg-gray-100 px-5 py-2.5 text-sm font-medium text-teal-600 transition hover:text-teal-600/75 sm:block"
+                        href="/register"
+                      >
+                        新規登録
+                      </Link>
+                    </li>
+                  </>
+                )}
+              </ul>
+            )}
 
             <button className="block rounded-sm bg-gray-100 p-2.5 text-gray-600 transition hover:text-gray-600/75 md:hidden">
               <span className="sr-only">Toggle menu</span>

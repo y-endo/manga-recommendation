@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { apiClient } from '@/lib/api-client';
-import { setAuthToken } from '@/lib/auth';
-import type { RegisterRequest, AuthResponse } from '@/types';
+import { useState, useEffect } from 'react';
+import { useAppDispatch } from '@/store';
+import { useRegisterMutation } from '@/store/api/authApi';
+import { setCredentials, clearCredentials } from '@/store/slices/authSlice';
 
 export function useRegisterForm() {
   const [email, setEmail] = useState('');
@@ -9,6 +9,8 @@ export function useRegisterForm() {
   const [username, setUsername] = useState('');
   const [isValid, setIsValid] = useState(false);
   const [message, setMessage] = useState<string | unknown>('');
+  const [register, { data, isLoading, error, isError }] = useRegisterMutation();
+  const dispatch = useAppDispatch();
 
   /**
    * メールアドレス/パスワードの入力変更ハンドラー
@@ -32,22 +34,7 @@ export function useRegisterForm() {
    */
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
-    const payload: RegisterRequest = {
-      email,
-      password,
-      username,
-    };
-
-    try {
-      const res = await apiClient.post<AuthResponse>('/api/auth/register', payload);
-      setMessage('登録に成功しました！');
-      setAuthToken(res.data.token);
-      window.location.assign('/');
-    } catch (error) {
-      setMessage('登録に失敗しました。');
-      console.error('Registration error:', error);
-    }
+    await register({ email, username, password });
   };
 
   /**
@@ -66,10 +53,22 @@ export function useRegisterForm() {
     }
   };
 
+  useEffect(() => {
+    if (data) {
+      setMessage('登録に成功しました。');
+      dispatch(setCredentials({ user: data.data.user }));
+      window.location.assign('/');
+    } else if (isError) {
+      setMessage('登録に失敗しました。');
+      dispatch(clearCredentials());
+    }
+  }, [data, isError, error, dispatch]);
+
   return {
     isValid,
     handleChange,
     handleSubmit,
     message,
+    isLoading,
   };
 }
