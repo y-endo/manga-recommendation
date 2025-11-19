@@ -1,10 +1,11 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { API_BASE_URL } from '@/lib/constants';
-import { setCredentials, clearCredentials } from '@/store/slices/authSlice';
+import { setCredentials, clearCredentials, setStatus } from '@/store/slices/authSlice';
+import type { RootState } from '@/store';
 import type { AuthResponse, LoginRequest, RegisterRequest, User } from '@/types';
 
 export const authApi = createApi({
-  reducerPath: 'autoApi',
+  reducerPath: 'authApi',
   tagTypes: ['Auth'],
   baseQuery: fetchBaseQuery({
     baseUrl: API_BASE_URL,
@@ -52,16 +53,31 @@ export const authApi = createApi({
       }),
       providesTags: ['Auth'],
     }),
+    session: builder.query<{ authenticated: boolean }, void>({
+      query: () => ({
+        url: '/api/auth/session',
+        method: 'GET',
+      }),
+      providesTags: ['Auth'],
+    }),
     logout: builder.mutation<void, void>({
       query: () => ({
         url: '/api/auth/logout',
         method: 'POST',
       }),
-      async onQueryStarted(_arg, { queryFulfilled, dispatch }) {
+      async onQueryStarted(_arg, { queryFulfilled, dispatch, getState }) {
+        // 楽観的更新で先に認証情報をクリア
+        const prevUser = (getState() as RootState).auth.user;
+        dispatch(clearCredentials());
         try {
           await queryFulfilled;
-        } finally {
-          dispatch(clearCredentials());
+        } catch (e) {
+          if (prevUser) {
+            dispatch(setCredentials({ user: prevUser }));
+          } else {
+            dispatch(setStatus('anonymous'));
+          }
+          console.error('Logout failed:', e);
         }
       },
       invalidatesTags: ['Auth'],
@@ -69,4 +85,4 @@ export const authApi = createApi({
   }),
 });
 
-export const { useRegisterMutation, useLoginMutation, useMeQuery, useLogoutMutation } = authApi;
+export const { useRegisterMutation, useLoginMutation, useMeQuery, useSessionQuery, useLogoutMutation } = authApi;
