@@ -1,0 +1,39 @@
+{
+  "files.watcherExclude": {
+    "**/node_modules/**": true
+  },
+  "files.exclude": {
+    "**/node_modules": true
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "eslint.validate": ["javascript", "typescript", "typescriptreact", "javascriptreact"],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.stylelint": "explicit",
+    "source.fixAll.eslint": "explicit"
+  },
+  "files.eol": "\n",
+  "stylelint.enable": true,
+  "stylelint.validate": ["css", "scss", "javascriptreact", "typescriptreact"],
+  "cSpell.customDictionaries": {
+    "project-words": {
+      "name": "project-words",
+      "path": "${workspaceRoot}/.vscode/project-words.txt",
+      "description": "プロジェクト固有の単語辞書",
+      "addWords": true,
+      "scope": "workspace"
+    }
+  }
+}
