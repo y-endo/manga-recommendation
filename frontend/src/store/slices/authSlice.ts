@@ -1,32 +1,40 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { User } from '@/types';
 
+// ユーザー型（不要フィールド除外）
 type AuthUser = Omit<User, 'created_at' | 'updated_at'>;
 
-type AuthState = {
+// 認証状態を一元管理
+export type AuthStatus = 'idle' | 'checking' | 'authenticated' | 'anonymous';
+
+interface AuthState {
   user: AuthUser | null;
-  initialized?: boolean;
-};
+  status: AuthStatus;
+}
 
 const initialState: AuthState = {
   user: null,
-  initialized: false,
+  status: 'idle',
 };
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+    setStatus(state, action: PayloadAction<AuthStatus>) {
+      state.status = action.payload;
+    },
     setCredentials(state, action: PayloadAction<{ user: AuthUser }>) {
       state.user = action.payload.user;
-      state.initialized = true;
+      state.status = 'authenticated';
     },
     clearCredentials(state) {
       state.user = null;
-      state.initialized = true;
+      // 認証済みセッションが無い状態
+      state.status = 'anonymous';
     },
   },
 });
 
-export const { setCredentials, clearCredentials } = authSlice.actions;
+export const { setStatus, setCredentials, clearCredentials } = authSlice.actions;
 export default authSlice.reducer;

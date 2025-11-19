@@ -62,6 +62,7 @@ func setupRoutes(e *echo.Echo) {
 	auth.POST("/register", handler.Register)
 	auth.POST("/login", handler.Login)
 	auth.GET("/me", handler.Me)
+	auth.GET("/session", handler.Session)
 	auth.POST("/logout", handler.Logout)
 
 	// 漫画エンドポイント

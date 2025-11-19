@@ -173,7 +173,6 @@ func Login(c echo.Context) error {
 }
 
 // Me - GET /api/auth/me
-// Authorization: Bearer <token> からユーザー情報を取得して返す
 func Me(c echo.Context) error {
 	cookie, err := c.Cookie("auth_token")
 	if err != nil || cookie.Value == "" {
@@ -232,6 +231,32 @@ func Me(c echo.Context) error {
 		"email": email,
 		"username": username,
 	})
+}
+
+// Session - GET /api/auth/session
+// cookie の存在と有効性を確認するだけ
+func Session(c echo.Context) error {
+	cookie, err := c.Cookie("auth_token")
+	if err != nil || cookie.Value == "" {
+		return c.JSON(http.StatusOK, map[string]interface{}{"authenticated": false})
+	}
+
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		return c.JSON(http.StatusOK, map[string]interface{}{"authenticated": false})
+	}
+
+	token, err := jwt.Parse(cookie.Value, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, echo.NewHTTPError(http.StatusOK, map[string]interface{}{"authenticated": false})
+		}
+		return []byte(secret), nil
+	})
+	if err != nil || !token.Valid {
+		return c.JSON(http.StatusOK, map[string]interface{}{"authenticated": false})
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{"authenticated": true})
 }
 
 // Logout - POST /api/auth/logout

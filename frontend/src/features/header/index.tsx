@@ -5,7 +5,7 @@ import Button from '@/components/button';
 import { useHeader } from './hooks/useHeader';
 
 export default function Header() {
-  const { initialized, authed, handleLogout } = useHeader();
+  const { status, authed, handleLogout } = useHeader();
 
   return (
     <header className="bg-white">
@@ -34,7 +34,7 @@ export default function Header() {
           </nav>
 
           <div className="flex items-center gap-4">
-            {initialized && (
+            {status !== 'idle' && status !== 'checking' && (
               <ul className="list-none sm:flex sm:gap-4">
                 {authed ? (
                   <li>
