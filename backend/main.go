@@ -26,9 +26,10 @@ func main() {
 
 	// CORS設定
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: strings.Split(os.Getenv("ALLOWED_ORIGINS"), ","),
-		AllowMethods: []string{echo.GET, echo.POST, echo.PUT, echo.DELETE, echo.OPTIONS},
-		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
+		AllowOrigins:     strings.Split(os.Getenv("ALLOWED_ORIGINS"), ","),
+		AllowMethods:     []string{echo.GET, echo.POST, echo.PUT, echo.DELETE, echo.OPTIONS},
+		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
+		AllowCredentials: true,
 	}))
 
 	// ルーティングの設定
@@ -60,6 +61,8 @@ func setupRoutes(e *echo.Echo) {
 	auth := api.Group("/auth")
 	auth.POST("/register", handler.Register)
 	auth.POST("/login", handler.Login)
+	auth.GET("/me", handler.Me)
+	auth.POST("/logout", handler.Logout)
 
 	// 漫画エンドポイント
 	manga := api.Group("/manga")
