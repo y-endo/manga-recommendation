@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"os"
 	"strings"
@@ -15,6 +16,21 @@ func main() {
 	// 環境変数の読み込み
 	if err := godotenv.Load(".env"); err != nil {
 		log.Println("Warning: .env file not found")
+	}
+
+	// DB接続
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		log.Fatal("DATABASE_URL is not set")
+	}
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// DB接続の確認
+	if err := db.Ping(); err != nil {
+		log.Fatal("Failed to connect to database:", err)
 	}
 
 	// Echoインスタンスの作成
@@ -33,7 +49,7 @@ func main() {
 	}))
 
 	// ルーティングの設定
-	setupRoutes(e)
+	setupRoutes(e, db)
 
 	// サーバー起動
 	port := os.Getenv("PORT")
@@ -48,7 +64,11 @@ func main() {
 }
 
 // setupRoutes はAPIルーティングを設定します
-func setupRoutes(e *echo.Echo) {
+func setupRoutes(e *echo.Echo, db *sql.DB) {
+	// ハンドラーの初期化
+	mangaHandler := handler.NewMangaHandler(db)
+
+
 	// ヘルスチェック
 	e.GET("/health", func(c echo.Context) error {
 		return c.JSON(200, map[string]string{"status": "ok"})
@@ -67,10 +87,8 @@ func setupRoutes(e *echo.Echo) {
 
 	// 漫画エンドポイント
 	manga := api.Group("/manga")
-	manga.GET("", nil)       // TODO: 実装
-	manga.GET("/:id", nil)   // TODO: 実装
-	manga.GET("/:id/reviews", nil) // TODO: 実装
-	manga.POST("/:id/reviews", nil) // TODO: 実装（要認証）
+	manga.GET("", mangaHandler.List)
+	manga.GET("/:id", mangaHandler.Get)
 
 	// おすすめエンドポイント
 	api.GET("/recommendations", nil) // TODO: 実装

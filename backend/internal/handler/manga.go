@@ -1,28 +1,61 @@
 package handler
 
 import (
+	"database/sql"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/lib/pq"
 )
 
 // MangaHandler は漫画関連のハンドラーを提供します
 type MangaHandler struct {
-	// TODO: サービス層を追加
+	db *sql.DB
 }
 
+type Manga struct {
+	ID string `json:"id"`
+	Title string `json:"title"`
+	Author string `json:"author"`
+	Description *string `json:"description"`
+	CoverImage *string `json:"coverImage"`
+	Genre []string `json:"genre"`
+}
 // NewMangaHandler は新しいMangaHandlerを作成します
-func NewMangaHandler() *MangaHandler {
-	return &MangaHandler{}
+func NewMangaHandler(db *sql.DB) *MangaHandler {
+	return &MangaHandler{
+		db: db,
+	}
 }
 
 // List は漫画一覧を取得します
 // GET /api/manga
 func (h *MangaHandler) List(c echo.Context) error {
-	// TODO: 実装
+	rows, err := h.db.Query(`
+		SELECT id, title, author, description, cover_image, genre
+		FROM manga
+	`)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "database query error"})
+	}
+	defer rows.Close()
+
+	var mangas []Manga
+
+	for rows.Next() {
+		var m Manga
+		if err := rows.Scan(&m.ID, &m.Title, &m.Author, &m.Description, &m.CoverImage, pq.Array(&m.Genre)); err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"message": "database scan error"})
+		}
+		mangas = append(mangas, m)
+	}
+
+	if err := rows.Err(); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "database rows error"})
+	}
+
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"message": "Manga list endpoint - To be implemented",
-		"data":    []interface{}{},
+		"data": mangas,
 	})
 }
 
@@ -30,10 +63,22 @@ func (h *MangaHandler) List(c echo.Context) error {
 // GET /api/manga/:id
 func (h *MangaHandler) Get(c echo.Context) error {
 	id := c.Param("id")
-	// TODO: 実装
+
+	var m Manga
+	err := h.db.QueryRow(`
+		SELECT id, title, author, description, cover_image, genre
+		FROM manga
+		WHERE id = $1
+	`, id).Scan(&m.ID, &m.Title, &m.Author, &m.Description, &m.CoverImage, pq.Array(&m.Genre))
+	if err == sql.ErrNoRows {
+		return c.JSON(http.StatusNotFound, map[string]string{"message": "manga not found"})
+	}
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "database query error"})
+	}
+
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"message": "Manga detail endpoint - To be implemented",
-		"id":      id,
+		"data": m,
 	})
 }
 
