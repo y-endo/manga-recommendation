@@ -1,10 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { User } from '@/types';
 
-// ユーザー型（不要フィールド除外）
-type AuthUser = Omit<User, 'created_at' | 'updated_at'>;
-
-// 認証状態を一元管理
+export type AuthUser = Omit<User, 'created_at' | 'updated_at'>;
 export type AuthStatus = 'idle' | 'checking' | 'authenticated' | 'anonymous';
 
 interface AuthState {

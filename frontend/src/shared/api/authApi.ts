@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { API_BASE_URL } from '@/lib/constants';
+import { API_BASE_URL } from '@/shared/lib/constants';
 import { setCredentials, clearCredentials, setStatus } from '@/store/slices/authSlice';
 import type { RootState } from '@/store';
 import type { AuthResponse, LoginRequest, RegisterRequest, User } from '@/types';

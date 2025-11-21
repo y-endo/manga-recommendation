@@ -1,6 +1,5 @@
-import { AuthInitializer } from '@/app/auth-initializer';
-import { StoreProvider } from '@/app/providers';
 import Header from '@/features/header';
+import { Providers } from '@/shared/providers';
 import type { Metadata } from 'next';
 
 import './globals.css';
@@ -14,13 +13,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ja">
       <body>
-        <StoreProvider>
-          <AuthInitializer>
-            <Header />
-            {children}
-            <footer>フッター</footer>
-          </AuthInitializer>
-        </StoreProvider>
+        <Providers>
+          <Header />
+          {children}
+          <footer>フッター</footer>
+        </Providers>
       </body>
     </html>
   );
