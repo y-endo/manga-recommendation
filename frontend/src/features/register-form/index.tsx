@@ -13,6 +13,7 @@ export default function RegisterForm() {
         <p>{typeof message === 'string' ? message : JSON.stringify(message, null, 2)}</p>
         <Input
           id="email"
+          name="email"
           autoComplete="email"
           label="メールアドレス"
           type="email"
@@ -21,6 +22,7 @@ export default function RegisterForm() {
         />
         <Input
           id="username"
+          name="username"
           label="ユーザー名"
           type="text"
           placeholder="ユーザー名を入力してください"
@@ -28,6 +30,7 @@ export default function RegisterForm() {
         />
         <Input
           id="password"
+          name="password"
           label="パスワード"
           type="password"
           placeholder="パスワードを入力してください"

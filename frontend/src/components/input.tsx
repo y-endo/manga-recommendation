@@ -1,5 +1,6 @@
 interface Props {
   id: string;
+  name: string;
   label: string;
   type?: string;
   autoComplete?: string;
@@ -7,14 +8,14 @@ interface Props {
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-export default function Input({ id, label, type = 'text', autoComplete, placeholder = '', onChange }: Props) {
+export default function Input({ id, name, label, type = 'text', autoComplete, placeholder = '', onChange }: Props) {
   return (
     <label htmlFor={id}>
       <span className="text-sm font-medium text-gray-700">{label}</span>
       <input
         type={type}
         id={id}
-        name={id}
+        name={name}
         autoComplete={autoComplete}
         placeholder={placeholder}
         className="mt-0.5 w-full rounded border-gray-300 p-2 shadow-sm sm:text-sm"

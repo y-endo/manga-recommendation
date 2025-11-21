@@ -14,6 +14,7 @@ export default function LoginForm() {
 
         <Input
           id="email"
+          name="email"
           autoComplete="email"
           label="メールアドレス"
           type="email"
@@ -23,6 +24,7 @@ export default function LoginForm() {
 
         <Input
           id="password"
+          name="password"
           label="パスワード"
           type="password"
           placeholder="パスワードを入力してください"

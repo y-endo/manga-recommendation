@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import Button from '@/components/button';
-import { useHeader } from './hooks/useHeader';
+import { useAuth } from '@/shared/hooks/useAuth';
 
 export default function Header() {
-  const { status, authed, handleLogout } = useHeader();
+  const { status, authed, logout } = useAuth();
 
   return (
     <header className="bg-white">
@@ -38,7 +38,7 @@ export default function Header() {
               <ul className="list-none sm:flex sm:gap-4">
                 {authed ? (
                   <li>
-                    <Button variant="primary" onClick={handleLogout}>
+                    <Button variant="primary" onClick={logout}>
                       ログアウト
                     </Button>
                   </li>

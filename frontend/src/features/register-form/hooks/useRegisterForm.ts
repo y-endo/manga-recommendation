@@ -1,6 +1,7 @@
+import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useAppDispatch } from '@/store';
-import { useRegisterMutation } from '@/store/api/authApi';
+import { useRegisterMutation } from '@/shared/api/authApi';
 import { setCredentials, clearCredentials } from '@/store/slices/authSlice';
 
 export function useRegisterForm() {
@@ -10,6 +11,7 @@ export function useRegisterForm() {
   const [isValid, setIsValid] = useState(false);
   const [message, setMessage] = useState<string | unknown>('');
   const [register, { data, isLoading, error, isError }] = useRegisterMutation();
+  const router = useRouter();
   const dispatch = useAppDispatch();
 
   /**
@@ -25,8 +27,6 @@ export function useRegisterForm() {
     } else if (name === 'password') {
       setPassword(value);
     }
-
-    validate();
   };
 
   /**
@@ -40,7 +40,7 @@ export function useRegisterForm() {
   /**
    * バリデーションチェック
    */
-  const validate = () => {
+  useEffect(() => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const isEmailValid = emailRegex.test(email);
     const isUsernameValid = username.length > 0;
@@ -51,18 +51,21 @@ export function useRegisterForm() {
     } else {
       setIsValid(false);
     }
-  };
+  }, [email, username, password]);
 
+  /**
+   * 登録成功/失敗時の処理
+   */
   useEffect(() => {
     if (data) {
       setMessage('登録に成功しました。');
       dispatch(setCredentials({ user: data.data.user }));
-      window.location.assign('/');
+      router.push('/');
     } else if (isError) {
       setMessage('登録に失敗しました。');
       dispatch(clearCredentials());
     }
-  }, [data, isError, error, dispatch]);
+  }, [data, isError, error, dispatch, router]);
 
   return {
     isValid,
