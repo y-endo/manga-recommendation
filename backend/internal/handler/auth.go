@@ -226,37 +226,23 @@ func Me(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "database query error"})
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"id":       id,
+	c.Logger().Infoj(map[string]interface{}{
+		"msg":      "me endpoint accessed",
+		"user_id":  id,
 		"email":    email,
 		"username": username,
 	})
-}
 
-// Session - GET /api/auth/session
-// cookie の存在と有効性を確認するだけ
-func Session(c echo.Context) error {
-	cookie, err := c.Cookie("auth_token")
-	if err != nil || cookie.Value == "" {
-		return c.JSON(http.StatusOK, map[string]interface{}{"authenticated": false})
-	}
-
-	secret := os.Getenv("JWT_SECRET")
-	if secret == "" {
-		return c.JSON(http.StatusOK, map[string]interface{}{"authenticated": false})
-	}
-
-	token, err := jwt.Parse(cookie.Value, func(t *jwt.Token) (interface{}, error) {
-		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, echo.NewHTTPError(http.StatusOK, map[string]interface{}{"authenticated": false})
-		}
-		return []byte(secret), nil
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"data": map[string]interface{}{
+			"user": map[string]interface{}{
+				"id":       id,
+				"email":    email,
+				"username": username,
+			},
+		},
+		"message": "success",
 	})
-	if err != nil || !token.Valid {
-		return c.JSON(http.StatusOK, map[string]interface{}{"authenticated": false})
-	}
-
-	return c.JSON(http.StatusOK, map[string]interface{}{"authenticated": true})
 }
 
 // Logout - POST /api/auth/logout
@@ -272,5 +258,8 @@ func Logout(c echo.Context) error {
 		Expires:  time.Unix(0, 0),
 	}
 	c.SetCookie(cookie)
+
+	c.Logger().Info("User logged out")
+
 	return c.JSON(http.StatusOK, map[string]string{"message": "logged out"})
 }

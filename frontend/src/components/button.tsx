@@ -1,4 +1,5 @@
 import clsx from 'clsx';
+import Link from 'next/link';
 
 type Variant = 'primary' | 'secondary';
 
@@ -7,6 +8,7 @@ interface BaseProps {
   hasArrow?: boolean; // 矢印アイコンを表示するかどうか
   disabled?: boolean; // 無効化するかどうか
   className?: string; // 追加のクラス名
+  isNextLink?: boolean; // Next.jsのLinkとして動作させるかどうか
   children: React.ReactNode;
 }
 
@@ -63,7 +65,16 @@ export default function Button({
   const classNames = buildClasses(variant, className);
 
   if (as === 'a') {
-    const { href, ...anchorRest } = rest as AnchorProps;
+    const { href, isNextLink, ...anchorRest } = rest as AnchorProps;
+    if (isNextLink && href) {
+      return (
+        <Link className={classNames} href={href} {...anchorRest}>
+          <span className="text-sm font-medium">{children}</span>
+          {hasArrow && <ArrowIcon />}
+        </Link>
+      );
+    }
+
     return (
       <a
         className={classNames}

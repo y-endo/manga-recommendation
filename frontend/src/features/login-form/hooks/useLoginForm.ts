@@ -1,17 +1,14 @@
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useLoginMutation } from '@/shared/api/authApi';
-import { useAppDispatch } from '@/store';
-import { setCredentials, clearCredentials } from '@/store/slices/authSlice';
 
 export function useLoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isValid, setIsValid] = useState(false);
   const [message, setMessage] = useState<string | unknown>('');
-  const [login, { data, isLoading, isError, error }] = useLoginMutation();
+  const [login, { data, isLoading, isError }] = useLoginMutation();
   const router = useRouter();
-  const dispatch = useAppDispatch();
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = event.target;
@@ -36,13 +33,12 @@ export function useLoginForm() {
   useEffect(() => {
     if (data) {
       setMessage('ログインに成功しました。');
-      dispatch(setCredentials({ user: data.data.user }));
       router.push('/');
+      router.refresh();
     } else if (isError) {
       setMessage('ログインに失敗しました。');
-      dispatch(clearCredentials());
     }
-  }, [data, isError, error, dispatch, router]);
+  }, [data, isError, router]);
 
   return {
     isValid,

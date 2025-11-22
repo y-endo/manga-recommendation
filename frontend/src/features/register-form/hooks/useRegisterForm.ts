@@ -1,8 +1,8 @@
+'use client';
+
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useRegisterMutation } from '@/shared/api/authApi';
-import { useAppDispatch } from '@/store';
-import { setCredentials, clearCredentials } from '@/store/slices/authSlice';
 
 export function useRegisterForm() {
   const [email, setEmail] = useState('');
@@ -10,9 +10,8 @@ export function useRegisterForm() {
   const [username, setUsername] = useState('');
   const [isValid, setIsValid] = useState(false);
   const [message, setMessage] = useState<string | unknown>('');
-  const [register, { data, isLoading, error, isError }] = useRegisterMutation();
+  const [register, { data, isLoading, isError }] = useRegisterMutation();
   const router = useRouter();
-  const dispatch = useAppDispatch();
 
   /**
    * メールアドレス/パスワードの入力変更ハンドラー
@@ -59,13 +58,12 @@ export function useRegisterForm() {
   useEffect(() => {
     if (data) {
       setMessage('登録に成功しました。');
-      dispatch(setCredentials({ user: data.data.user }));
       router.push('/');
+      router.refresh();
     } else if (isError) {
       setMessage('登録に失敗しました。');
-      dispatch(clearCredentials());
     }
-  }, [data, isError, error, dispatch, router]);
+  }, [data, isError, router]);
 
   return {
     isValid,

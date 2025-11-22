@@ -17,24 +17,41 @@ async function proxyRequest(request: NextRequest, { params }: { params: Promise<
   try {
     const body = request.method !== 'GET' && request.method !== 'HEAD' ? await request.blob() : undefined;
 
+    // リクエストヘッダーの準備
+    const requestHeaders = new Headers();
+    // 必要なヘッダーを明示的に転送
+    const contentType = request.headers.get('Content-Type');
+    if (contentType) requestHeaders.set('Content-Type', contentType);
+
+    const authorization = request.headers.get('Authorization');
+    if (authorization) requestHeaders.set('Authorization', authorization);
+
+    // Cookieを転送（セッション維持に必要）
+    const cookie = request.headers.get('Cookie');
+    if (cookie) requestHeaders.set('Cookie', cookie);
+
     const response = await fetch(finalUrl, {
       method: request.method,
-      headers: {
-        'Content-Type': request.headers.get('Content-Type') || 'application/json',
-        Authorization: request.headers.get('Authorization') || '',
-      },
+      headers: requestHeaders,
       body,
       cache: 'no-store',
     });
 
     const data = await response.blob();
 
+    // レスポンスヘッダーの準備
+    const responseHeaders = new Headers();
+    const resContentType = response.headers.get('Content-Type');
+    if (resContentType) responseHeaders.set('Content-Type', resContentType);
+
+    // Set-Cookieを転送（ログイン・ログアウト処理に必要）
+    const setCookie = response.headers.get('Set-Cookie');
+    if (setCookie) responseHeaders.set('Set-Cookie', setCookie);
+
     return new NextResponse(data, {
       status: response.status,
       statusText: response.statusText,
-      headers: {
-        'Content-Type': response.headers.get('Content-Type') || 'application/json',
-      },
+      headers: responseHeaders,
     });
   } catch (error) {
     console.error('Proxy request failed:', error);
