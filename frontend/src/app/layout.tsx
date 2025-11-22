@@ -15,11 +15,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="ja">
-      <body>
+      <body className="flex min-h-screen flex-col">
         <Providers>
           <Header user={user} />
-          {children}
-          <footer>フッター</footer>
+          <div className="flex-1">{children}</div>
+          <footer className="border-t border-slate-200 bg-white py-8 text-center text-sm text-slate-500">
+            <div className="mx-auto max-w-7xl px-4">
+              &copy; {new Date().getFullYear()} Manga Recommendation. All rights reserved.
+            </div>
+          </footer>
         </Providers>
       </body>
     </html>
