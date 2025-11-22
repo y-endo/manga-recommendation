@@ -1,11 +1,15 @@
-'use client';
-
+// src/features/header/index.tsx
 import Link from 'next/link';
 import Button from '@/components/button';
-import { useAuth } from '@/shared/hooks/useAuth';
+import { LogoutButton } from './components/logout-button';
+import type { AuthUser } from '@/types';
 
-export default function Header() {
-  const { status, authed, logout } = useAuth();
+type Props = {
+  user: AuthUser | null;
+};
+
+export default function Header({ user }: Props) {
+  const authed = !!user;
 
   return (
     <header className="bg-white">
@@ -14,71 +18,22 @@ export default function Header() {
           <h1>ロゴ</h1>
         </Link>
 
-        <div className="flex flex-1 items-center justify-end md:justify-between">
-          <nav aria-label="Global" className="hidden md:block">
-            <ul className="flex items-center gap-6 text-sm">
-              <li>
-                <a className="text-gray-500 transition hover:text-gray-500/75" href="#">
-                  {' '}
-                  About{' '}
-                </a>
-              </li>
-
-              <li>
-                <a className="text-gray-500 transition hover:text-gray-500/75" href="#">
-                  {' '}
-                  Careers{' '}
-                </a>
-              </li>
-            </ul>
-          </nav>
-
-          <div className="flex items-center gap-4">
-            {status !== 'idle' && status !== 'checking' && (
-              <ul className="list-none sm:flex sm:gap-4">
-                {authed ? (
-                  <li>
-                    <Button variant="primary" onClick={logout}>
-                      ログアウト
-                    </Button>
-                  </li>
-                ) : (
-                  <>
-                    <li>
-                      <Link
-                        className="block rounded-md bg-teal-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-teal-700"
-                        href="/login"
-                      >
-                        ログイン
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        className="hidden rounded-md bg-gray-100 px-5 py-2.5 text-sm font-medium text-teal-600 transition hover:text-teal-600/75 sm:block"
-                        href="/register"
-                      >
-                        新規登録
-                      </Link>
-                    </li>
-                  </>
-                )}
-              </ul>
-            )}
-
-            <button className="block rounded-sm bg-gray-100 p-2.5 text-gray-600 transition hover:text-gray-600/75 md:hidden">
-              <span className="sr-only">Toggle menu</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="size-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16"></path>
-              </svg>
-            </button>
-          </div>
+        <div className="flex flex-1 items-center justify-end gap-4">
+          {authed ? (
+            <>
+              <span className="text-sm text-gray-700">{user?.username} さん</span>
+              <LogoutButton />
+            </>
+          ) : (
+            <>
+              <Button as="a" href="/login" isNextLink={true} variant="secondary">
+                ログイン
+              </Button>
+              <Button as="a" href="/register" isNextLink={true} variant="primary">
+                会員登録
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </header>

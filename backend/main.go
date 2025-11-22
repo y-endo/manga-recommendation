@@ -9,6 +9,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	glog "github.com/labstack/gommon/log"
 	"github.com/y-endo/manga-recommendation/internal/handler"
 )
 
@@ -35,6 +36,7 @@ func main() {
 
 	// Echoインスタンスの作成
 	e := echo.New()
+	e.Logger.SetLevel(glog.INFO)
 
 	// ミドルウェアの設定
 	e.Use(middleware.Logger())
@@ -82,7 +84,6 @@ func setupRoutes(e *echo.Echo, db *sql.DB) {
 	auth.POST("/register", handler.Register)
 	auth.POST("/login", handler.Login)
 	auth.GET("/me", handler.Me)
-	auth.GET("/session", handler.Session)
 	auth.POST("/logout", handler.Logout)
 
 	// 漫画エンドポイント

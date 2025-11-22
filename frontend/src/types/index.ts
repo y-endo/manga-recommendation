@@ -7,6 +7,8 @@ export interface User {
   updated_at: string;
 }
 
+export type AuthUser = Omit<User, 'created_at' | 'updated_at'>;
+
 // 漫画型
 export interface Manga {
   id: string;
@@ -55,7 +57,7 @@ export interface RegisterRequest {
 // 認証レスポンス型
 export interface AuthResponse {
   data: {
-    user: Omit<User, 'created_at' | 'updated_at'>;
+    user: AuthUser;
   };
   message: string;
 }

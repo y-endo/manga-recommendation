@@ -14,6 +14,13 @@ class ApiClient {
    * 共通のfetchメソッド
    */
   private async fetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+    // headers
+    const headers = new Headers(init.headers);
+    if (!headers.has('Content-Type')) {
+      headers.set('Content-Type', 'application/json');
+    }
+    init.headers = headers;
+
     const response = await fetch(`${this.baseURL}${path}`, {
       ...init,
       credentials: 'include',
@@ -68,4 +75,4 @@ class ApiClient {
   }
 }
 
-export const apiClient = new ApiClient(BACKEND_API_URL);
+export const apiClient = new ApiClient(`${BACKEND_API_URL}/api`);
