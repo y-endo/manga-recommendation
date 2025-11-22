@@ -14,14 +14,14 @@ import (
 
 // RegisterRequest - リクエストボディ
 type RegisterRequest struct {
-	Email string `json:"email"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
 	Username string `json:"username"`
 }
 
 // LoginRequest - ログインリクエストボディ
 type LoginRequest struct {
-	Email string `json:"email"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
@@ -32,7 +32,7 @@ func setAuthCookie(c echo.Context, token string) {
 		Value:    token,
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   os.Getenv("APP_ENV") == "production",
+		Secure:   os.Getenv("ENVIRONMENT") == "production",
 		SameSite: http.SameSiteLaxMode,
 		Expires:  time.Now().Add(24 * time.Hour),
 	}
@@ -73,10 +73,10 @@ func Register(c echo.Context) error {
 	).Scan(&id)
 	if err != nil {
 		c.Logger().Errorj(map[string]interface{}{
-			"msg": "failed to insert user",
-			"error": err.Error(),
-			"email": req.Email,
-			"username": req.Username,
+			"msg":           "failed to insert user",
+			"error":         err.Error(),
+			"email":         req.Email,
+			"username":      req.Username,
 			"password_hash": string(hashed),
 		})
 		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "database insert error"})
@@ -86,7 +86,7 @@ func Register(c echo.Context) error {
 	secret := os.Getenv("JWT_SECRET")
 	claims := jwt.MapClaims{
 		"user_id": id,
-		"exp": time.Now().Add(24 * time.Hour).Unix(),
+		"exp":     time.Now().Add(24 * time.Hour).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	ss, err := token.SignedString([]byte(secret))
@@ -99,8 +99,8 @@ func Register(c echo.Context) error {
 	return c.JSON(http.StatusCreated, map[string]interface{}{
 		"data": map[string]interface{}{
 			"user": map[string]interface{}{
-				"id": id,
-				"email": req.Email,
+				"id":       id,
+				"email":    req.Email,
 				"username": req.Username,
 			},
 		},
@@ -124,9 +124,9 @@ func Login(c echo.Context) error {
 
 	// ユーザー情報取得
 	var (
-		id string
-		email string
-		username string
+		id           string
+		email        string
+		username     string
 		passwordHash string
 	)
 	err = db.QueryRow(
@@ -150,7 +150,7 @@ func Login(c echo.Context) error {
 	secret := os.Getenv("JWT_SECRET")
 	claims := jwt.MapClaims{
 		"user_id": id,
-		"exp": time.Now().Add(24 * time.Hour).Unix(),
+		"exp":     time.Now().Add(24 * time.Hour).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	ss, err := token.SignedString([]byte(secret))
@@ -163,8 +163,8 @@ func Login(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"data": map[string]interface{}{
 			"user": map[string]interface{}{
-				"id": id,
-				"email": email,
+				"id":       id,
+				"email":    email,
 				"username": username,
 			},
 		},
@@ -211,8 +211,8 @@ func Me(c echo.Context) error {
 	defer db.Close()
 
 	var (
-		id string
-		email string
+		id       string
+		email    string
 		username string
 	)
 	err = db.QueryRow(
@@ -227,8 +227,8 @@ func Me(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"id": id,
-		"email": email,
+		"id":       id,
+		"email":    email,
 		"username": username,
 	})
 }
@@ -266,7 +266,7 @@ func Logout(c echo.Context) error {
 		Value:    "",
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   os.Getenv("APP_ENV") == "production",
+		Secure:   os.Getenv("ENVIRONMENT") == "production",
 		SameSite: http.SameSiteLaxMode,
 		MaxAge:   -1,
 		Expires:  time.Unix(0, 0),

@@ -1,7 +1,7 @@
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { useAppDispatch } from '@/store';
 import { useRegisterMutation } from '@/shared/api/authApi';
+import { useAppDispatch } from '@/store';
 import { setCredentials, clearCredentials } from '@/store/slices/authSlice';
 
 export function useRegisterForm() {

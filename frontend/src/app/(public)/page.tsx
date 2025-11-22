@@ -1,4 +1,4 @@
-export default function Home() {
+export default function TopPage() {
   return (
     <main className="min-h-screen from-gray-50 to-gray-100">
       <div className="container mx-auto px-4 py-16">
