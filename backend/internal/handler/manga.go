@@ -56,6 +56,7 @@ func (h *MangaHandler) List(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"data": mangas,
+		"message": "success",
 	})
 }
 

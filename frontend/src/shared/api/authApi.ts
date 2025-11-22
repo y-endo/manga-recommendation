@@ -14,7 +14,7 @@ export const authApi = createApi({
   endpoints: (builder) => ({
     register: builder.mutation<AuthResponse, RegisterRequest>({
       query: (body) => ({
-        url: '/api/auth/register',
+        url: '/auth/register',
         method: 'POST',
         body,
       }),
@@ -31,7 +31,7 @@ export const authApi = createApi({
     }),
     login: builder.mutation<AuthResponse, LoginRequest>({
       query: (body) => ({
-        url: '/api/auth/login',
+        url: '/auth/login',
         method: 'POST',
         body,
       }),
@@ -48,21 +48,21 @@ export const authApi = createApi({
     }),
     me: builder.query<User, void>({
       query: () => ({
-        url: '/api/auth/me',
+        url: '/auth/me',
         method: 'GET',
       }),
       providesTags: ['Auth'],
     }),
     session: builder.query<{ authenticated: boolean }, void>({
       query: () => ({
-        url: '/api/auth/session',
+        url: '/auth/session',
         method: 'GET',
       }),
       providesTags: ['Auth'],
     }),
     logout: builder.mutation<void, void>({
       query: () => ({
-        url: '/api/auth/logout',
+        url: '/auth/logout',
         method: 'POST',
       }),
       async onQueryStarted(_arg, { queryFulfilled, dispatch, getState }) {

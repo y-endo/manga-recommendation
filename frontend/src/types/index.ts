@@ -60,8 +60,8 @@ export interface AuthResponse {
   message: string;
 }
 
-// APIエラー型
-export interface ApiError {
+// 漫画一覧レスポンス型
+export interface MangaListResponse {
+  data: Omit<Manga, 'created_at' | 'updated_at'>[];
   message: string;
-  code?: string;
 }
