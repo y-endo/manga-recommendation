@@ -12,16 +12,19 @@ export default function Header({ user }: Props) {
   const authed = !!user;
 
   return (
-    <header className="bg-white">
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-8 px-4 sm:px-6 lg:px-8">
-        <Link className="block text-teal-600" href="/">
-          <h1>ロゴ</h1>
+    <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/80 backdrop-blur-md">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <Link
+          className="flex items-center gap-2 text-xl font-bold text-blue-600 transition hover:text-blue-700"
+          href="/"
+        >
+          <span>漫画レコメンデーション</span>
         </Link>
 
-        <div className="flex flex-1 items-center justify-end gap-4">
+        <div className="flex items-center gap-4">
           {authed ? (
             <>
-              <span className="text-sm text-gray-700">{user?.username} さん</span>
+              <span className="hidden text-sm font-medium text-slate-600 sm:block">{user?.username} さん</span>
               <LogoutButton />
             </>
           ) : (

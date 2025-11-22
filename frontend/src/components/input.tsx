@@ -10,17 +10,19 @@ interface Props {
 
 export default function Input({ id, name, label, type = 'text', autoComplete, placeholder = '', onChange }: Props) {
   return (
-    <label htmlFor={id}>
-      <span className="text-sm font-medium text-gray-700">{label}</span>
+    <div className="w-full">
+      <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-slate-700">
+        {label}
+      </label>
       <input
         type={type}
         id={id}
         name={name}
         autoComplete={autoComplete}
         placeholder={placeholder}
-        className="mt-0.5 w-full rounded border-gray-300 p-2 shadow-sm sm:text-sm"
+        className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 placeholder-slate-400 shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none sm:text-sm"
         onChange={onChange}
       />
-    </label>
+    </div>
   );
 }
