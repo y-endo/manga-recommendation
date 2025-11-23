@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { getMangaList } from './lib/getMangaList';
 
 export default async function MangaList() {
@@ -17,7 +18,9 @@ export default async function MangaList() {
           </div>
 
           <div className="flex flex-1 flex-col p-4">
-            <h2 className="mb-1 text-lg font-bold text-slate-900 group-hover:text-blue-600">{manga.title}</h2>
+            <h2 className="mb-1 text-lg font-bold text-slate-900 group-hover:text-blue-600">
+              <Link href={`/manga/${manga.slug}`}>{manga.title}</Link>
+            </h2>
             <p className="mb-4 text-sm text-slate-500">{manga.author}</p>
             <p className="line-clamp-3 flex-1 text-sm leading-relaxed text-slate-600">{manga.description}</p>
 

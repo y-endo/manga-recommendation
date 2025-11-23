@@ -12,6 +12,7 @@ export type AuthUser = Omit<User, 'created_at' | 'updated_at'>;
 // 漫画型
 export interface Manga {
   id: string;
+  slug: string;
   title: string;
   author: string;
   description: string;
@@ -65,5 +66,11 @@ export interface AuthResponse {
 // 漫画一覧レスポンス型
 export interface MangaListResponse {
   data: Omit<Manga, 'created_at' | 'updated_at'>[];
+  message: string;
+}
+
+// 漫画詳細レスポンス型
+export interface MangaDetailResponse {
+  data: Omit<Manga, 'created_at' | 'updated_at'>;
   message: string;
 }

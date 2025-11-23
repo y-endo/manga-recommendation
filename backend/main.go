@@ -89,7 +89,7 @@ func setupRoutes(e *echo.Echo, db *sql.DB) {
 	// 漫画エンドポイント
 	manga := api.Group("/manga")
 	manga.GET("", mangaHandler.List)
-	manga.GET("/:id", mangaHandler.Get)
+	manga.GET("/:slug", mangaHandler.Get)
 
 	// おすすめエンドポイント
 	api.GET("/recommendations", nil) // TODO: 実装

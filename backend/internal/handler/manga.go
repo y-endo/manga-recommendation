@@ -15,6 +15,7 @@ type MangaHandler struct {
 
 type Manga struct {
 	ID string `json:"id"`
+	Slug string `json:"slug"`
 	Title string `json:"title"`
 	Author string `json:"author"`
 	Description *string `json:"description"`
@@ -32,7 +33,7 @@ func NewMangaHandler(db *sql.DB) *MangaHandler {
 // GET /api/manga
 func (h *MangaHandler) List(c echo.Context) error {
 	rows, err := h.db.Query(`
-		SELECT id, title, author, description, cover_image, genre
+		SELECT id, slug, title, author, description, cover_image, genre
 		FROM manga
 	`)
 	if err != nil {
@@ -44,7 +45,7 @@ func (h *MangaHandler) List(c echo.Context) error {
 
 	for rows.Next() {
 		var m Manga
-		if err := rows.Scan(&m.ID, &m.Title, &m.Author, &m.Description, &m.CoverImage, pq.Array(&m.Genre)); err != nil {
+		if err := rows.Scan(&m.ID, &m.Slug, &m.Title, &m.Author, &m.Description, &m.CoverImage, pq.Array(&m.Genre)); err != nil {
 			return c.JSON(http.StatusInternalServerError, map[string]string{"message": "database scan error"})
 		}
 		mangas = append(mangas, m)
@@ -61,16 +62,16 @@ func (h *MangaHandler) List(c echo.Context) error {
 }
 
 // Get は漫画詳細を取得します
-// GET /api/manga/:id
+// GET /api/manga/:slug
 func (h *MangaHandler) Get(c echo.Context) error {
-	id := c.Param("id")
+	slug := c.Param("slug")
 
 	var m Manga
 	err := h.db.QueryRow(`
-		SELECT id, title, author, description, cover_image, genre
+		SELECT id, slug, title, author, description, cover_image, genre
 		FROM manga
-		WHERE id = $1
-	`, id).Scan(&m.ID, &m.Title, &m.Author, &m.Description, &m.CoverImage, pq.Array(&m.Genre))
+		WHERE slug = $1
+	`, slug).Scan(&m.ID, &m.Slug, &m.Title, &m.Author, &m.Description, &m.CoverImage, pq.Array(&m.Genre))
 	if err == sql.ErrNoRows {
 		return c.JSON(http.StatusNotFound, map[string]string{"message": "manga not found"})
 	}
@@ -84,7 +85,7 @@ func (h *MangaHandler) Get(c echo.Context) error {
 }
 
 // GetReviews は漫画のレビュー一覧を取得します
-// GET /api/manga/:id/reviews
+// GET /api/manga/:slug/reviews
 func (h *MangaHandler) GetReviews(c echo.Context) error {
 	id := c.Param("id")
 	// TODO: 実装
@@ -96,7 +97,7 @@ func (h *MangaHandler) GetReviews(c echo.Context) error {
 }
 
 // CreateReview は漫画のレビューを投稿します
-// POST /api/manga/:id/reviews
+// POST /api/manga/:slug/reviews
 func (h *MangaHandler) CreateReview(c echo.Context) error {
 	id := c.Param("id")
 	// TODO: 実装（要認証）
