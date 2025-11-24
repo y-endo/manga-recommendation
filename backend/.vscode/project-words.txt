@@ -2,3 +2,6 @@ Errorj
 gotoenv
 ossp
 mangas
+followee
+Infoj
+trgm

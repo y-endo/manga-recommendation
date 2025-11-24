@@ -1,0 +1,34 @@
+CREATE TABLE IF NOT EXISTS authors (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT UNIQUE NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS manga_authors (
+    manga_id UUID NOT NULL REFERENCES manga(id) ON DELETE CASCADE,
+    author_id UUID NOT NULL REFERENCES authors(id) ON DELETE RESTRICT,
+    PRIMARY KEY (manga_id, author_id)
+);
+
+CREATE TABLE IF NOT EXISTS genres (
+    id SERIAL PRIMARY KEY,
+    name TEXT UNIQUE UNIQUE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS manga_genres (
+    manga_id UUID NOT NULL REFERENCES manga(id) ON DELETE CASCADE,
+    genre_id INTEGER NOT NULL REFERENCES genres(id) ON DELETE RESTRICT,
+    PRIMARY KEY (manga_id, genre_id)
+);
+
+CREATE TABLE IF NOT EXISTS tags (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT UNIQUE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS manga_tags (
+    manga_id UUID NOT NULL REFERENCES manga(id) ON DELETE CASCADE,
+    tag_id UUID NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+    PRIMARY KEY (manga_id, tag_id)
+);
