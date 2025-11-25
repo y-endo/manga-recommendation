@@ -9,17 +9,33 @@ export interface User {
 
 export type AuthUser = Omit<User, 'created_at' | 'updated_at'>;
 
-// 漫画型
-export interface Manga {
-  id: string;
+// 漫画リスト型
+export interface MangaListItem {
   slug: string;
   title: string;
   author: string;
-  description: string;
-  cover_image: string;
+  cover_image: string | null;
   genre: string[];
-  created_at: string;
-  updated_at: string;
+  tags: string[];
+  likes_count: number;
+  avg_rating: number;
+  published_year: number;
+}
+
+// 漫画詳細型
+export interface MangaDetail {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  cover_image: string | null;
+  published_year: number;
+  likes_count: number;
+  reviews_count: number;
+  avg_rating: number;
+  authors: string[];
+  genres: string[];
+  tags: string[];
 }
 
 // レビュー型
@@ -65,12 +81,12 @@ export interface AuthResponse {
 
 // 漫画一覧レスポンス型
 export interface MangaListResponse {
-  data: Omit<Manga, 'created_at' | 'updated_at'>[];
+  data: MangaListItem[];
   message: string;
 }
 
 // 漫画詳細レスポンス型
 export interface MangaDetailResponse {
-  data: Omit<Manga, 'created_at' | 'updated_at'>;
+  data: MangaDetail;
   message: string;
 }

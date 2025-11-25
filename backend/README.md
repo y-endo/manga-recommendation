@@ -2,6 +2,36 @@
 
 このディレクトリには Go で書かれたバックエンド API が含まれています。
 
+# ユーティリティコマンド
+- マイグレーション（テーブル作成）
+```
+docker compose exec backend go run cmd/migrate/main.go
+```
+- テーブル一覧
+```
+docker compose exec db psql -U manga_user -d manga_recommendation -c "\dt"
+```
+- Seed データ挿入
+```
+docker compose exec backend go run cmd/seed/main.go
+```
+- manga テーブルに入ってるデータを確認
+```
+docker compose exec db psql -U manga_user -d manga_recommendation -c "SELECT * FROM manga;"
+```
+- manga テーブルを削除（リセット用）
+```
+docker compose exec db psql -U manga_user -d manga_recommendation -c "DROP TABLE IF EXISTS users CASCADE; DELETE FROM schema_migrations WHERE version = '001_init_users.sql';"
+docker compose exec db psql -U manga_user -d manga_recommendation -c "DROP TABLE IF EXISTS manga CASCADE; DELETE FROM schema_migrations WHERE version = '002_create_manga.sql';"
+```
+- VIEW 削除
+```
+docker compose exec db psql -U manga_user -d manga_recommendation \
+  -c "DROP VIEW IF EXISTS manga_detail_view CASCADE;" \
+  -c "DELETE FROM schema_migrations WHERE version = '011_manga_detail_view.sql';"
+```
+
+
 ## ディレクトリ構成
 
 ```

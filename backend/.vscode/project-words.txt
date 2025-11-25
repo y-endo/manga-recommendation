@@ -5,3 +5,5 @@ mangas
 followee
 Infoj
 trgm
+endo
+labstack

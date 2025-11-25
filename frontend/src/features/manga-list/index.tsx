@@ -8,7 +8,7 @@ export default async function MangaList() {
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {mangaList.data.map((manga) => (
         <article
-          key={manga.id}
+          key={manga.slug}
           className="group flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md"
         >
           {/* 画像があればここに表示するエリア */}
@@ -22,7 +22,6 @@ export default async function MangaList() {
               <Link href={`/manga/${manga.slug}`}>{manga.title}</Link>
             </h2>
             <p className="mb-4 text-sm text-slate-500">{manga.author}</p>
-            <p className="line-clamp-3 flex-1 text-sm leading-relaxed text-slate-600">{manga.description}</p>
 
             <div className="mt-4 flex flex-wrap gap-2">
               {manga.genre.map((g) => (
@@ -30,6 +29,20 @@ export default async function MangaList() {
                   {g}
                 </span>
               ))}
+              {manga.tags.map((t) => (
+                <span key={t} className="rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700">
+                  {t}
+                </span>
+              ))}
+            </div>
+
+            <div>
+              <span className="mt-auto text-sm font-medium text-slate-700">いいね: {manga.likes_count}</span>
+              <span className="mt-auto ml-4 text-sm font-medium text-slate-700">評価: {manga.avg_rating}</span>
+            </div>
+
+            <div>
+              <span className="mt-auto text-sm font-medium text-slate-700">出版年: {manga.published_year}</span>
             </div>
           </div>
         </article>

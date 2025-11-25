@@ -1,11 +1,12 @@
 package main
 
 import (
-	"database/sql"
+	"context"
 	"log"
 	"os"
 	"strings"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -24,15 +25,21 @@ func main() {
 	if dbURL == "" {
 		log.Fatal("DATABASE_URL is not set")
 	}
-	db, err := sql.Open("postgres", dbURL)
+
+	ctx := context.Background()
+
+	db, err := pgxpool.New(ctx, dbURL)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed to connect to database:", err)
 	}
 
 	// DB接続の確認
-	if err := db.Ping(); err != nil {
-		log.Fatal("Failed to connect to database:", err)
+	conn, err := db.Acquire(ctx)
+	if err != nil {
+		log.Fatal("Failed to acquire database connection:", err)
 	}
+	conn.Release()
+	log.Println("Connected to database")
 
 	// Echoインスタンスの作成
 	e := echo.New()
@@ -66,10 +73,9 @@ func main() {
 }
 
 // setupRoutes はAPIルーティングを設定します
-func setupRoutes(e *echo.Echo, db *sql.DB) {
+func setupRoutes(e *echo.Echo, db *pgxpool.Pool) {
 	// ハンドラーの初期化
 	mangaHandler := handler.NewMangaHandler(db)
-
 
 	// ヘルスチェック
 	e.GET("/health", func(c echo.Context) error {
@@ -88,8 +94,8 @@ func setupRoutes(e *echo.Echo, db *sql.DB) {
 
 	// 漫画エンドポイント
 	manga := api.Group("/manga")
-	manga.GET("", mangaHandler.List)
-	manga.GET("/:slug", mangaHandler.Get)
+	manga.GET("", mangaHandler.GetList)
+	manga.GET("/:slug", mangaHandler.GetDetail)
 
 	// おすすめエンドポイント
 	api.GET("/recommendations", nil) // TODO: 実装

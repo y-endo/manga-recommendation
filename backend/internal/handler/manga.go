@@ -1,86 +1,57 @@
 package handler
 
 import (
-	"database/sql"
 	"net/http"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
-	"github.com/lib/pq"
+
+	"github.com/y-endo/manga-recommendation/internal/repository"
 )
 
 // MangaHandler は漫画関連のハンドラーを提供します
 type MangaHandler struct {
-	db *sql.DB
+	db   *pgxpool.Pool
+	repo *repository.MangaRepository
 }
 
-type Manga struct {
-	ID string `json:"id"`
-	Slug string `json:"slug"`
-	Title string `json:"title"`
-	Author string `json:"author"`
-	Description *string `json:"description"`
-	CoverImage *string `json:"coverImage"`
-	Genre []string `json:"genre"`
-}
 // NewMangaHandler は新しいMangaHandlerを作成します
-func NewMangaHandler(db *sql.DB) *MangaHandler {
+func NewMangaHandler(db *pgxpool.Pool) *MangaHandler {
 	return &MangaHandler{
-		db: db,
+		db:   db,
+		repo: &repository.MangaRepository{DB: db},
 	}
 }
 
-// List は漫画一覧を取得します
+// GetList は漫画一覧を取得します
 // GET /api/manga
-func (h *MangaHandler) List(c echo.Context) error {
-	rows, err := h.db.Query(`
-		SELECT id, slug, title, author, description, cover_image, genre
-		FROM manga
-	`)
+func (h *MangaHandler) GetList(c echo.Context) error {
+	list, err := h.repo.GetList(c.Request().Context())
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "database query error"})
-	}
-	defer rows.Close()
-
-	var mangas []Manga
-
-	for rows.Next() {
-		var m Manga
-		if err := rows.Scan(&m.ID, &m.Slug, &m.Title, &m.Author, &m.Description, &m.CoverImage, pq.Array(&m.Genre)); err != nil {
-			return c.JSON(http.StatusInternalServerError, map[string]string{"message": "database scan error"})
-		}
-		mangas = append(mangas, m)
-	}
-
-	if err := rows.Err(); err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "database rows error"})
+		c.Logger().Error("Failed to fetch manga list:", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "failed to fetch manga list"})
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"data": mangas,
+		"data":    list,
 		"message": "success",
 	})
 }
 
-// Get は漫画詳細を取得します
+// GetDetail は漫画詳細を取得します
 // GET /api/manga/:slug
-func (h *MangaHandler) Get(c echo.Context) error {
+func (h *MangaHandler) GetDetail(c echo.Context) error {
 	slug := c.Param("slug")
 
-	var m Manga
-	err := h.db.QueryRow(`
-		SELECT id, slug, title, author, description, cover_image, genre
-		FROM manga
-		WHERE slug = $1
-	`, slug).Scan(&m.ID, &m.Slug, &m.Title, &m.Author, &m.Description, &m.CoverImage, pq.Array(&m.Genre))
-	if err == sql.ErrNoRows {
-		return c.JSON(http.StatusNotFound, map[string]string{"message": "manga not found"})
-	}
+	manga, err := h.repo.GetDetail(c.Request().Context(), slug)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "database query error"})
+		c.Logger().Error("Failed to fetch manga detail:", err)
+		return c.JSON(http.StatusNotFound, map[string]string{"message": "manga not found"})
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"data": m,
+		"data":    manga,
+		"message": "success",
 	})
 }
 
