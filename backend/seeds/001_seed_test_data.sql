@@ -36,10 +36,11 @@ BEGIN
     -- ユーザー
     -----------------------------------------
     -- 管理者
-    INSERT INTO users (email, username, password_hash, role)
+    INSERT INTO users (email, username, user_slug, password_hash, role)
     VALUES (
         'a@gmail.com',
         '管理者ユーザー',
+        'a',
         crypt('a', gen_salt('bf')), -- password: a（開発用）
         'admin'
     )
@@ -49,10 +50,11 @@ BEGIN
     RETURNING id INTO admin_user_id;
 
     -- 一般ユーザー1
-    INSERT INTO users (email, username, password_hash, role)
+    INSERT INTO users (email, username, user_slug, password_hash, role)
     VALUES (
         'taro@example.com',
         '太郎',
+        'taro',
         crypt('password1', gen_salt('bf')),
         'user'
     )
@@ -61,10 +63,11 @@ BEGIN
     RETURNING id INTO user_taro_id;
 
     -- 一般ユーザー2
-    INSERT INTO users (email, username, password_hash, role)
+    INSERT INTO users (email, username, user_slug, password_hash, role)
     VALUES (
         'hanako@example.com',
         '花子',
+        'hanako',
         crypt('password2', gen_salt('bf')),
         'user'
     )

@@ -17,6 +17,7 @@ type RegisterRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 	Username string `json:"username"`
+	UserSlug string `json:"user_slug"`
 }
 
 // LoginRequest - ログインリクエストボディ
@@ -56,7 +57,27 @@ func Register(c echo.Context) error {
 	// 既存ユーザーの確認
 	var exists bool
 	if err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE email=$1)", req.Email).Scan(&exists); err != nil {
+		c.Logger().Errorj(map[string]interface{}{
+			"msg":   "email の存在確認に失敗しました",
+			"error": err.Error(),
+			"email": req.Email,
+		})
 		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "database query error"})
+	}
+	if exists {
+		return c.JSON(http.StatusConflict, map[string]string{"message": "メールアドレスは既に使用されています"})
+	}
+
+	if err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE user_slug=$1)", req.UserSlug).Scan(&exists); err != nil {
+		c.Logger().Errorj(map[string]interface{}{
+			"msg":       "user_slug の存在確認に失敗しました",
+			"error":     err.Error(),
+			"user_slug": req.UserSlug,
+		})
+		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "database query error"})
+	}
+	if exists {
+		return c.JSON(http.StatusConflict, map[string]string{"message": "ユーザーIDは既に使用されています"})
 	}
 
 	// パスワードハッシュ化
@@ -68,8 +89,8 @@ func Register(c echo.Context) error {
 	// レコード挿入
 	var id string
 	err = db.QueryRow(
-		"INSERT INTO users (email, password_hash, username) VALUES ($1, $2, $3) RETURNING id",
-		req.Email, string(hashed), req.Username,
+		"INSERT INTO users (email, password_hash, username, user_slug) VALUES ($1, $2, $3, $4) RETURNING id",
+		req.Email, string(hashed), req.Username, req.UserSlug,
 	).Scan(&id)
 	if err != nil {
 		c.Logger().Errorj(map[string]interface{}{
@@ -77,6 +98,7 @@ func Register(c echo.Context) error {
 			"error":         err.Error(),
 			"email":         req.Email,
 			"username":      req.Username,
+			"user_slug":     req.UserSlug,
 			"password_hash": string(hashed),
 		})
 		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "database insert error"})
@@ -99,9 +121,10 @@ func Register(c echo.Context) error {
 	return c.JSON(http.StatusCreated, map[string]interface{}{
 		"data": map[string]interface{}{
 			"user": map[string]interface{}{
-				"id":       id,
-				"email":    req.Email,
-				"username": req.Username,
+				"id":        id,
+				"email":     req.Email,
+				"username":  req.Username,
+				"user_slug": req.UserSlug,
 			},
 		},
 		"message": "User registered successfully",
@@ -127,12 +150,13 @@ func Login(c echo.Context) error {
 		id           string
 		email        string
 		username     string
+		userSlug     string
 		passwordHash string
 	)
 	err = db.QueryRow(
-		"SELECT id, email, username, password_hash FROM users WHERE email=$1",
+		"SELECT id, email, username, user_slug, password_hash FROM users WHERE email=$1",
 		req.Email,
-	).Scan(&id, &email, &username, &passwordHash)
+	).Scan(&id, &email, &username, &userSlug, &passwordHash)
 	if err == sql.ErrNoRows {
 		// メール or パスワードが違う場合は401エラー
 		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "invalid email or password"})
@@ -163,9 +187,10 @@ func Login(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"data": map[string]interface{}{
 			"user": map[string]interface{}{
-				"id":       id,
-				"email":    email,
-				"username": username,
+				"id":        id,
+				"email":     email,
+				"username":  username,
+				"user_slug": userSlug,
 			},
 		},
 		"message": "User logged in successfully",
@@ -214,11 +239,12 @@ func Me(c echo.Context) error {
 		id       string
 		email    string
 		username string
+		userSlug string
 	)
 	err = db.QueryRow(
-		"SELECT id, email, username FROM users WHERE id=$1",
+		"SELECT id, email, username, user_slug FROM users WHERE id=$1",
 		userID,
-	).Scan(&id, &email, &username)
+	).Scan(&id, &email, &username, &userSlug)
 	if err == sql.ErrNoRows {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "user not found"})
 	}
@@ -227,18 +253,20 @@ func Me(c echo.Context) error {
 	}
 
 	c.Logger().Infoj(map[string]interface{}{
-		"msg":      "me endpoint accessed",
-		"user_id":  id,
-		"email":    email,
-		"username": username,
+		"msg":       "me endpoint accessed",
+		"user_id":   id,
+		"email":     email,
+		"username":  username,
+		"user_slug": userSlug,
 	})
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"data": map[string]interface{}{
 			"user": map[string]interface{}{
-				"id":       id,
-				"email":    email,
-				"username": username,
+				"id":        id,
+				"email":     email,
+				"username":  username,
+				"user_slug": userSlug,
 			},
 		},
 		"message": "success",
