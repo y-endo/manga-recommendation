@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -19,7 +20,6 @@ type MangaListItem struct {
 }
 
 type MangaDetail struct {
-	ID            string   `json:"id"`
 	Slug          string   `json:"slug"`
 	Title         string   `json:"title"`
 	Description   string   `json:"description"`
@@ -31,6 +31,15 @@ type MangaDetail struct {
 	Authors       []string `json:"authors"`
 	Genres        []string `json:"genres"`
 	Tags          []string `json:"tags"`
+}
+
+type MangaReview struct {
+	Rating       int       `json:"rating"`
+	Title        string    `json:"title"`
+	Body         string    `json:"body"`
+	HelpfulCount int       `json:"helpful_count"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 type MangaRepository struct {
@@ -111,7 +120,6 @@ func (r *MangaRepository) GetDetail(ctx context.Context, slug string) (*MangaDet
 
 	var md MangaDetail
 	err := r.DB.QueryRow(ctx, query, slug).Scan(
-		&md.ID,
 		&md.Slug,
 		&md.Title,
 		&md.Description,
@@ -129,4 +137,45 @@ func (r *MangaRepository) GetDetail(ctx context.Context, slug string) (*MangaDet
 	}
 
 	return &md, nil
+}
+
+func (r *MangaRepository) GetReviews(ctx context.Context, mangaID string) ([]MangaReview, error) {
+	query := `
+		SELECT
+			r.rating,
+			r.title,
+			r.body,
+			r.helpful_count,
+			r.created_at,
+			r.updated_at
+		FROM reviews r
+		WHERE r.manga_id = $1
+		ORDER BY r.created_at DESC;
+	`
+
+	rows, err := r.DB.Query(ctx, query, mangaID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	reviews := []MangaReview{}
+
+	for rows.Next() {
+		var review MangaReview
+		err := rows.Scan(
+			&review.Rating,
+			&review.Title,
+			&review.Body,
+			&review.HelpfulCount,
+			&review.CreatedAt,
+			&review.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		reviews = append(reviews, review)
+	}
+
+	return reviews, nil
 }

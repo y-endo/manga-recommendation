@@ -1,6 +1,5 @@
 CREATE OR REPLACE VIEW manga_detail_view AS
 SELECT
-    m.id,
     m.slug,
     m.title,
     m.description,

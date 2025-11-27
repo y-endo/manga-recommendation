@@ -45,7 +45,10 @@ func (h *MangaHandler) GetDetail(c echo.Context) error {
 
 	manga, err := h.repo.GetDetail(c.Request().Context(), slug)
 	if err != nil {
-		c.Logger().Error("Failed to fetch manga detail:", err)
+		c.Logger().Error("Failed to fetch manga detail:", map[string]interface{}{
+			"error": err,
+			"slug":  slug,
+		})
 		return c.JSON(http.StatusNotFound, map[string]string{"message": "manga not found"})
 	}
 
@@ -58,12 +61,28 @@ func (h *MangaHandler) GetDetail(c echo.Context) error {
 // GetReviews は漫画のレビュー一覧を取得します
 // GET /api/manga/:slug/reviews
 func (h *MangaHandler) GetReviews(c echo.Context) error {
-	id := c.Param("id")
-	// TODO: 実装
+	slug := c.Param("slug")
+	// manga テーブルから manga ID のみを取得する
+	var mangaID string
+	err := h.db.QueryRow(
+		c.Request().Context(),
+		"SELECT id FROM manga WHERE slug=$1",
+		slug,
+	).Scan(&mangaID)
+	if err != nil {
+		c.Logger().Error("Failed to fetch manga ID:", err)
+		return c.JSON(http.StatusNotFound, map[string]string{"message": "manga not found"})
+	}
+
+	reviews, err := h.repo.GetReviews(c.Request().Context(), mangaID)
+	if err != nil {
+		c.Logger().Error("Failed to fetch manga reviews:", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "failed to fetch manga reviews"})
+	}
+
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"message":  "Manga reviews endpoint - To be implemented",
-		"manga_id": id,
-		"data":     []interface{}{},
+		"data":    reviews,
+		"message": "success",
 	})
 }
 

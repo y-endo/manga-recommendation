@@ -41,11 +41,10 @@ export interface MangaDetail {
 
 // レビュー型
 export interface Review {
-  id: string;
-  user_id: string;
-  manga_id: string;
-  rating: number; // 1-5
-  comment: string;
+  rating: number;
+  title: string;
+  body: string;
+  helpful_count: number;
   created_at: string;
   updated_at: string;
 }
@@ -89,5 +88,11 @@ export interface MangaListResponse {
 // 漫画詳細レスポンス型
 export interface MangaDetailResponse {
   data: MangaDetail;
+  message: string;
+}
+
+// レビューレスポンス型
+export interface ReviewResponse {
+  data: Review[];
   message: string;
 }

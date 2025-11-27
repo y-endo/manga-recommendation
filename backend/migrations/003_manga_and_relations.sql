@@ -13,3 +13,4 @@ CREATE TABLE IF NOT EXISTS manga (
 );
 
 CREATE INDEX IF NOT EXISTS idx_manga_title_search ON manga USING gin (title gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_manga_slug_search ON manga USING gin (slug gin_trgm_ops);
