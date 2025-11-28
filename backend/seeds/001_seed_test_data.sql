@@ -18,6 +18,11 @@ DECLARE
     genre_dark_fantasy_id    INTEGER;
     genre_japanese_fantasy_id INTEGER;
 
+    -- タグ（tags.id は SERIAL なので INTEGER）
+    tag_anime_id INTEGER;
+    tag_live_action_id INTEGER;
+    tag_completed_id INTEGER;
+
     -- 漫画
     manga_naruto_id UUID;
     manga_bleach_id UUID;
@@ -115,7 +120,7 @@ BEGIN
     RETURNING id INTO author_kimetsu;
 
     -----------------------------------------
-    -- ジャンル（すべて日本語）
+    -- ジャンル
     -----------------------------------------
     INSERT INTO genres (name)
     VALUES ('少年漫画')
@@ -136,6 +141,24 @@ BEGIN
     VALUES ('和風')
     ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
     RETURNING id INTO genre_japanese_fantasy_id;
+
+    -----------------------------------------
+    -- タグ
+    -----------------------------------------
+    INSERT INTO tags (name)
+    VALUES ('アニメ化')
+    ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
+    RETURNING id INTO tag_anime_id;
+
+    INSERT INTO tags (name)
+    VALUES ('実写化')
+    ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
+    RETURNING id INTO tag_live_action_id;
+
+    INSERT INTO tags (name)
+    VALUES ('完結済み')
+    ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
+    RETURNING id INTO tag_completed_id;
 
     -----------------------------------------
     -- 漫画
@@ -192,7 +215,7 @@ BEGIN
     ON CONFLICT DO NOTHING;
 
     -----------------------------------------
-    -- 漫画とジャンル（日本語名）
+    -- 漫画とジャンル
     -----------------------------------------
     INSERT INTO manga_genres (manga_id, genre_id) VALUES
       -- NARUTO
@@ -209,6 +232,24 @@ BEGIN
       (manga_kimetsu_id, genre_battle_action_id),
       (manga_kimetsu_id, genre_dark_fantasy_id),
       (manga_kimetsu_id, genre_japanese_fantasy_id)
+    ON CONFLICT DO NOTHING;
+
+    -----------------------------------------
+    -- 漫画とタグ
+    -----------------------------------------
+    INSERT INTO manga_tags (manga_id, tag_id) VALUES
+      -- NARUTO
+      (manga_naruto_id, tag_anime_id),
+      (manga_naruto_id, tag_live_action_id),
+      (manga_naruto_id, tag_completed_id),
+
+      -- BLEACH
+      (manga_bleach_id, tag_anime_id),
+      (manga_bleach_id, tag_completed_id),
+
+      -- 鬼滅の刃
+      (manga_kimetsu_id, tag_anime_id),
+      (manga_kimetsu_id, tag_completed_id)
     ON CONFLICT DO NOTHING;
 
     -----------------------------------------

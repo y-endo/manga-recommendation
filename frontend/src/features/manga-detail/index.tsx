@@ -8,58 +8,91 @@ interface Props {
 export default async function MangaDetail({ slug }: Props) {
   const { manga, reviews } = await getMangaDetail(slug);
 
-  console.log(manga, reviews);
-
   return (
-    <article>
-      <div className="flex flex-col-reverse">
-        <h1 className="mb-4 text-3xl font-bold">{manga.title}</h1>
+    <article className="space-y-5 sm:space-y-6">
+      <header className="flex items-start gap-4 max-sm:flex-col sm:gap-6">
         <Image
-          src={manga.cover_image ?? 'https://placehold.jp/150x150.png'}
+          src={manga.cover_image ?? 'https://placehold.jp/300x400.png'}
           alt={manga.title}
-          width={150}
-          height={150}
-          className="mx-auto"
+          width={180}
+          height={240}
+          className="h-auto w-auto max-w-full rounded-lg border border-slate-200 bg-slate-100 object-cover"
         />
-      </div>
-      {manga.authors.length > 0 && (
-        <p className="mb-2">
-          <span>Authors:</span> {manga.authors.join(', ')}
-        </p>
-      )}
-      <p className="mb-4">{manga.description}</p>
-      <div>
-        <span>Genres:</span>
-        <ul className="mb-4 list-inside list-disc">
-          {manga.genres.map((genre) => (
-            <li key={genre}>{genre}</li>
-          ))}
-        </ul>
-      </div>
-      <div>
-        <span>Tags:</span>
-        <ul className="mb-4 list-inside list-disc">
-          {manga.tags.map((tag) => (
-            <li key={tag}>{tag}</li>
-          ))}
-        </ul>
-        <p>いいね：{manga.likes_count}</p>
-        <p>レビュー数：{manga.reviews_count}</p>
-        <p>評価：{manga.avg_rating}</p>
-        <p>出版年：{manga.published_year}</p>
-      </div>
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">{manga.title}</h1>
+          {manga.authors.length > 0 && (
+            <p className="mt-2 text-xs text-slate-600 sm:text-sm">著者: {manga.authors.join(', ')}</p>
+          )}
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:mt-4 sm:grid-cols-4">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-center">
+              <span className="block text-[11px] font-medium text-slate-500">いいね</span>
+              <span className="text-sm font-semibold text-slate-900">{manga.likes_count}</span>
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-center">
+              <span className="block text-[11px] font-medium text-slate-500">レビュー数</span>
+              <span className="text-sm font-semibold text-slate-900">{manga.reviews_count}</span>
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-center">
+              <span className="block text-[11px] font-medium text-slate-500">評価</span>
+              <span className="text-sm font-semibold text-slate-900">{manga.avg_rating}</span>
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-center">
+              <span className="block text-[11px] font-medium text-slate-500">出版年</span>
+              <span className="text-sm font-semibold text-slate-900">{manga.published_year}</span>
+            </div>
+          </div>
+        </div>
+      </header>
 
-      <h2 className="mt-8 mb-4 text-2xl font-bold">レビュー一覧</h2>
-      <div className="flex gap-4">
-        {reviews.map((review, index) => (
-          <article key={index} className="w-1/3 rounded-lg border border-gray-300 p-4">
-            <h3 className="mb-2 text-xl font-semibold">{review.title}</h3>
-            <p className="mb-2">評価: {review.rating} / 5</p>
-            <p className="mb-4">{review.body}</p>
-            <p className="text-sm text-gray-500">Helpful: {review.helpful_count}</p>
-          </article>
-        ))}
-      </div>
+      {manga.description && (
+        <section className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
+          <h2 className="mb-2 text-lg font-semibold text-slate-900">作品紹介</h2>
+          <p className="text-sm text-slate-700 sm:text-base">{manga.description}</p>
+        </section>
+      )}
+
+      <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+        <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
+          <h3 className="mb-2 text-base font-semibold text-slate-900">ジャンル</h3>
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
+            {manga.genres.map((genre) => (
+              <span
+                key={genre}
+                className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700 sm:text-xs"
+              >
+                {genre}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
+          <h3 className="mb-2 text-base font-semibold text-slate-900">タグ</h3>
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
+            {manga.tags.map((tag) => (
+              <span
+                key={tag}
+                className="rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-medium text-green-700 sm:text-xs"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-xl font-bold text-slate-900">レビュー一覧</h2>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+          {reviews.map((review, index) => (
+            <article key={index} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
+              <h3 className="mb-1 text-base font-semibold text-slate-900 sm:text-lg">{review.title}</h3>
+              <p className="mb-1 text-xs text-slate-700 sm:text-sm">評価: {review.rating} / 5</p>
+              <p className="mb-3 text-xs text-slate-700 sm:text-sm">{review.body}</p>
+              <p className="text-[11px] text-slate-500 sm:text-xs">Helpful: {review.helpful_count}</p>
+            </article>
+          ))}
+        </div>
+      </section>
     </article>
   );
 }

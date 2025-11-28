@@ -20,7 +20,7 @@ export default function Input({ id, name, label, type = 'text', autoComplete, pl
         name={name}
         autoComplete={autoComplete}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 placeholder-slate-400 shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none sm:text-sm"
+        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder-slate-400 shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none sm:px-4 sm:py-2.5 sm:text-sm"
         onChange={onChange}
       />
     </div>

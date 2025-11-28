@@ -1,6 +1,11 @@
 @import 'tailwindcss';
 
 @theme {
+  --color-brand: #2563eb;
+  --color-brand-700: #1d4ed8;
+  --radius-md: 0.5rem;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 2px 4px 0 rgb(0 0 0 / 0.08);
 }
 
 body {
@@ -12,4 +17,12 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+/* 最小限の共通カードヘルパー */
+.card {
+  @apply rounded-xl border border-slate-200 bg-white shadow-sm;
+}
+.card-hover {
+  @apply transition hover:shadow-md;
 }

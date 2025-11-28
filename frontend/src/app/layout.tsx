@@ -16,9 +16,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="ja">
       <body className="flex min-h-screen flex-col">
-        <Providers>
+        <Providers user={user}>
           <Header user={user} />
-          <div className="flex-1">{children}</div>
+          <div className="flex-1 px-3 sm:px-4">{children}</div>
           <footer className="border-t border-slate-200 bg-white py-8 text-center text-sm text-slate-500">
             <div className="mx-auto max-w-7xl px-4">
               &copy; {new Date().getFullYear()} Manga Recommendation. All rights reserved.
