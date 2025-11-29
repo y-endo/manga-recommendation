@@ -1,48 +1,60 @@
 package model
 
-import (
-	"time"
-)
+import "time"
 
-// User はユーザー情報を表します
-type User struct {
-	ID        string    `json:"id" db:"id"`
-	Email     string    `json:"email" db:"email"`
-	Password  string    `json:"-" db:"password_hash"` // JSONには含めない
-	Username  string    `json:"username" db:"username"`
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+type MangaListItem struct {
+	Slug          string   `json:"slug"`
+	Title         string   `json:"title"`
+	Author        string   `json:"author"`
+	CoverImage    *string  `json:"cover_image"`
+	Genres        []string `json:"genres"`
+	Tags          []string `json:"tags"`
+	LikesCount    int      `json:"likes_count"`
+	AvgRating     float64  `json:"avg_rating"`
+	PublishedYear int      `json:"published_year"`
 }
 
-// Manga は漫画情報を表します
-type Manga struct {
-	ID          string    `json:"id" db:"id"`
-	Title       string    `json:"title" db:"title"`
-	Author      string    `json:"author" db:"author"`
-	Description string    `json:"description" db:"description"`
-	CoverImage  string    `json:"cover_image" db:"cover_image"`
-	Genre       []string  `json:"genre" db:"genre"`
-	CreatedAt   time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
+type MangaDetail struct {
+	Slug          string   `json:"slug"`
+	Title         string   `json:"title"`
+	Description   string   `json:"description"`
+	CoverImage    *string  `json:"cover_image"`
+	PublishedYear int      `json:"published_year"`
+	LikesCount    int      `json:"likes_count"`
+	ReviewsCount  int      `json:"reviews_count"`
+	AvgRating     float64  `json:"avg_rating"`
+	Authors       []string `json:"authors"`
+	Genres        []string `json:"genres"`
+	Tags          []string `json:"tags"`
 }
 
-// Review はレビュー情報を表します
-type Review struct {
-	ID        string    `json:"id" db:"id"`
-	UserID    string    `json:"user_id" db:"user_id"`
-	MangaID   string    `json:"manga_id" db:"manga_id"`
-	Rating    int       `json:"rating" db:"rating"` // 1-5
-	Comment   string    `json:"comment" db:"comment"`
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+type MangaGenre struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }
 
-// ReadingList はユーザーの読書リストを表します
-type ReadingList struct {
-	ID        string    `json:"id" db:"id"`
-	UserID    string    `json:"user_id" db:"user_id"`
-	MangaID   string    `json:"manga_id" db:"manga_id"`
-	Status    string    `json:"status" db:"status"` // reading, completed, plan_to_read
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+type MangaTag struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+
+type MangaReview struct {
+	Rating       int       `json:"rating"`
+	Title        string    `json:"title"`
+	Body         string    `json:"body"`
+	HelpfulCount int       `json:"helpful_count"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
+type MangaListFilter struct {
+	Title            *string
+	Author           *string
+	Genres           []string
+	Tags             []string
+	PublishedYearMin *int
+	PublishedYearMax *int
+	MinRating        *float64
+	Limit            int
+	Offset           int
 }

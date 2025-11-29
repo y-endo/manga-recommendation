@@ -2,11 +2,14 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
 
+	"github.com/y-endo/manga-recommendation/internal/model"
 	"github.com/y-endo/manga-recommendation/internal/repository"
+	"github.com/y-endo/manga-recommendation/internal/utils"
 )
 
 // MangaHandler は漫画関連のハンドラーを提供します
@@ -26,7 +29,57 @@ func NewMangaHandler(db *pgxpool.Pool) *MangaHandler {
 // GetList は漫画一覧を取得します
 // GET /api/manga
 func (h *MangaHandler) GetList(c echo.Context) error {
-	list, err := h.repo.GetList(c.Request().Context())
+	q := c.QueryParams()
+	filter := model.MangaListFilter{}
+
+	if v := q.Get("title"); v != "" {
+		filter.Title = &v
+	}
+	if v := q.Get("author"); v != "" {
+		filter.Author = &v
+	}
+	if v := q.Get("genres"); v != "" {
+		filter.Genres = utils.SplitNonEmpty(v, ",")
+	}
+	if v := q.Get("tags"); v != "" {
+		filter.Tags = utils.SplitNonEmpty(v, ",")
+	}
+	if v := q.Get("year_min"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			filter.PublishedYearMin = &n
+		}
+	}
+	if v := q.Get("year_max"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			filter.PublishedYearMax = &n
+		}
+	}
+	if v := q.Get("min_rating"); v != "" {
+		if f, err := strconv.ParseFloat(v, 64); err == nil {
+			filter.MinRating = &f
+		}
+	}
+	if v := q.Get("limit"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			filter.Limit = n
+		}
+	} else {
+		filter.Limit = 20 // デフォルト値
+	}
+	if v := q.Get("page"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			filter.Offset = n
+		}
+	} else {
+		filter.Offset = 1 // デフォルト値
+	}
+
+	c.Logger().Infoj(map[string]interface{}{
+		"message": "manga.GetListのフィルター条件",
+		"filter":  filter,
+	})
+
+	list, err := h.repo.GetList(c.Request().Context(), filter)
 	if err != nil {
 		c.Logger().Error("Failed to fetch manga list:", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "failed to fetch manga list"})
@@ -54,6 +107,36 @@ func (h *MangaHandler) GetDetail(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"data":    manga,
+		"message": "success",
+	})
+}
+
+// GetGenresは漫画のジャンル一覧を取得します
+// GET /api/manga/genres
+func (h *MangaHandler) GetGenres(c echo.Context) error {
+	genres, err := h.repo.GetGenres(c.Request().Context())
+	if err != nil {
+		c.Logger().Error("Failed to fetch manga genres:", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "failed to fetch manga genres"})
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"data":    genres,
+		"message": "success",
+	})
+}
+
+// GetTags は漫画のタグ一覧を取得します
+// GET /api/manga/tags
+func (h *MangaHandler) GetTags(c echo.Context) error {
+	tags, err := h.repo.GetTags(c.Request().Context())
+	if err != nil {
+		c.Logger().Error("Failed to fetch manga tags:", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "failed to fetch manga tags"})
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"data":    tags,
 		"message": "success",
 	})
 }

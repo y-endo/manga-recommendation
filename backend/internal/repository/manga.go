@@ -2,51 +2,18 @@ package repository
 
 import (
 	"context"
-	"time"
+	"fmt"
+	"strings"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/y-endo/manga-recommendation/internal/model"
 )
-
-type MangaListItem struct {
-	Slug          string   `json:"slug"`
-	Title         string   `json:"title"`
-	Author        string   `json:"author"`
-	CoverImage    *string  `json:"cover_image"`
-	Genre         []string `json:"genre"`
-	Tags          []string `json:"tags"`
-	LikesCount    int      `json:"likes_count"`
-	AvgRating     float64  `json:"avg_rating"`
-	PublishedYear int      `json:"published_year"`
-}
-
-type MangaDetail struct {
-	Slug          string   `json:"slug"`
-	Title         string   `json:"title"`
-	Description   string   `json:"description"`
-	CoverImage    *string  `json:"cover_image"`
-	PublishedYear int      `json:"published_year"`
-	LikesCount    int      `json:"likes_count"`
-	ReviewsCount  int      `json:"reviews_count"`
-	AvgRating     float64  `json:"avg_rating"`
-	Authors       []string `json:"authors"`
-	Genres        []string `json:"genres"`
-	Tags          []string `json:"tags"`
-}
-
-type MangaReview struct {
-	Rating       int       `json:"rating"`
-	Title        string    `json:"title"`
-	Body         string    `json:"body"`
-	HelpfulCount int       `json:"helpful_count"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
-}
 
 type MangaRepository struct {
 	DB *pgxpool.Pool
 }
 
-func (r *MangaRepository) GetList(ctx context.Context) ([]MangaListItem, error) {
+func (r *MangaRepository) GetList(ctx context.Context, f model.MangaListFilter) ([]model.MangaListItem, error) {
 	query := `
 		SELECT
 			m.slug,
@@ -77,48 +44,101 @@ func (r *MangaRepository) GetList(ctx context.Context) ([]MangaListItem, error) 
 		LEFT JOIN genres g ON mg.genre_id = g.id
 		LEFT JOIN manga_tags mt ON mt.manga_id = m.id
 		LEFT JOIN tags t ON mt.tag_id = t.id
-		GROUP BY m.id
-		ORDER BY m.likes_count DESC;
 	`
 
-	rows, err := r.DB.Query(ctx, query)
+	conds := []string{}
+	args := []interface{}{}
+	argPos := 1
+
+	if f.Title != nil && *f.Title != "" {
+		conds = append(conds, fmt.Sprintf("m.title ILIKE '%%' || $%d || '%%'", argPos))
+		args = append(args, *f.Title)
+		argPos++
+	}
+	if f.Author != nil && *f.Author != "" {
+		// 作者名は authors テーブルの a.name に対してフィルタ
+		conds = append(conds, fmt.Sprintf("a.name ILIKE '%%' || $%d || '%%'", argPos))
+		args = append(args, *f.Author)
+		argPos++
+	}
+	if len(f.Genres) > 0 {
+		// OR で任意一致: g.name = ANY($n)
+		conds = append(conds, fmt.Sprintf("g.name = ANY($%d)", argPos))
+		args = append(args, f.Genres)
+		argPos++
+	}
+	if len(f.Tags) > 0 {
+		conds = append(conds, fmt.Sprintf("t.name = ANY($%d)", argPos))
+		args = append(args, f.Tags)
+		argPos++
+	}
+	if f.PublishedYearMin != nil {
+		conds = append(conds, fmt.Sprintf("m.published_year >= $%d", argPos))
+		args = append(args, *f.PublishedYearMin)
+		argPos++
+	}
+	if f.PublishedYearMax != nil {
+		conds = append(conds, fmt.Sprintf("m.published_year <= $%d", argPos))
+		args = append(args, *f.PublishedYearMax)
+		argPos++
+	}
+	if f.MinRating != nil {
+		conds = append(conds, fmt.Sprintf("m.avg_rating >= $%d", argPos))
+		args = append(args, *f.MinRating)
+		argPos++
+	}
+
+	if len(conds) > 0 {
+		query += "WHERE " + strings.Join(conds, " AND ") + "\n"
+	}
+
+	// GROUP BY & ソート
+	query += "GROUP BY m.id\n"
+	query += "ORDER BY m.likes_count DESC\n"
+
+	// ページネーション (デフォルト値)
+	limit := f.Limit
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+	offset := (f.Offset - 1) * limit
+	query += fmt.Sprintf("LIMIT %d OFFSET %d", limit, offset)
+
+	rows, err := r.DB.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	list := []MangaListItem{}
-
+	var list []model.MangaListItem
 	for rows.Next() {
-		var item MangaListItem
-		err := rows.Scan(
+		var item model.MangaListItem
+		if err := rows.Scan(
 			&item.Slug,
 			&item.Title,
 			&item.Author,
 			&item.CoverImage,
-			&item.Genre,
+			&item.Genres,
 			&item.Tags,
 			&item.LikesCount,
 			&item.AvgRating,
 			&item.PublishedYear,
-		)
-		if err != nil {
+		); err != nil {
 			return nil, err
 		}
 		list = append(list, item)
 	}
-
-	return list, nil
+	return list, rows.Err()
 }
 
-func (r *MangaRepository) GetDetail(ctx context.Context, slug string) (*MangaDetail, error) {
+func (r *MangaRepository) GetDetail(ctx context.Context, slug string) (*model.MangaDetail, error) {
 	query := `
 		SELECT * FROM manga_detail_view
 		WHERE slug = $1
 		LIMIT 1;
 	`
 
-	var md MangaDetail
+	var md model.MangaDetail
 	err := r.DB.QueryRow(ctx, query, slug).Scan(
 		&md.Slug,
 		&md.Title,
@@ -139,7 +159,57 @@ func (r *MangaRepository) GetDetail(ctx context.Context, slug string) (*MangaDet
 	return &md, nil
 }
 
-func (r *MangaRepository) GetReviews(ctx context.Context, mangaID string) ([]MangaReview, error) {
+func (r *MangaRepository) GetGenres(ctx context.Context) ([]model.MangaGenre, error) {
+	query := `SELECT id, name FROM genres ORDER BY name;`
+	rows, err := r.DB.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	genres := []model.MangaGenre{}
+
+	for rows.Next() {
+		var genre model.MangaGenre
+		err := rows.Scan(
+			&genre.ID,
+			&genre.Name,
+		)
+		if err != nil {
+			return nil, err
+		}
+		genres = append(genres, genre)
+	}
+
+	return genres, nil
+}
+
+func (r *MangaRepository) GetTags(ctx context.Context) ([]model.MangaTag, error) {
+	query := `SELECT id, name FROM tags ORDER BY name;`
+	rows, err := r.DB.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	tags := []model.MangaTag{}
+
+	for rows.Next() {
+		var tag model.MangaTag
+		err := rows.Scan(
+			&tag.ID,
+			&tag.Name,
+		)
+		if err != nil {
+			return nil, err
+		}
+		tags = append(tags, tag)
+	}
+
+	return tags, nil
+}
+
+func (r *MangaRepository) GetReviews(ctx context.Context, mangaID string) ([]model.MangaReview, error) {
 	query := `
 		SELECT
 			r.rating,
@@ -159,10 +229,10 @@ func (r *MangaRepository) GetReviews(ctx context.Context, mangaID string) ([]Man
 	}
 	defer rows.Close()
 
-	reviews := []MangaReview{}
+	reviews := []model.MangaReview{}
 
 	for rows.Next() {
-		var review MangaReview
+		var review model.MangaReview
 		err := rows.Scan(
 			&review.Rating,
 			&review.Title,

@@ -97,6 +97,8 @@ func setupRoutes(e *echo.Echo, db *pgxpool.Pool) {
 	manga.GET("", mangaHandler.GetList)
 	manga.GET("/:slug", mangaHandler.GetDetail)
 	manga.GET("/:slug/reviews", mangaHandler.GetReviews)
+	manga.GET("/genres", mangaHandler.GetGenres)
+	manga.GET("/tags", mangaHandler.GetTags)
 
 	// おすすめエンドポイント
 	api.GET("/recommendations", nil) // TODO: 実装
