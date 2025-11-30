@@ -55,6 +55,7 @@ type MangaListFilter struct {
 	PublishedYearMin *int
 	PublishedYearMax *int
 	MinRating        *float64
+	Sort             *string
 	Limit            int
 	Offset           int
 }

@@ -35,7 +35,7 @@ func (r *MangaRepository) GetList(ctx context.Context, f model.MangaListFilter) 
 				'{}'
 			) AS tags,
 			m.likes_count,
-			m.avg_rating,
+			COALESCE(m.avg_rating, 0),
 			m.published_year
 		FROM manga m
 		LEFT JOIN manga_authors ma ON ma.manga_id = m.id
@@ -94,7 +94,28 @@ func (r *MangaRepository) GetList(ctx context.Context, f model.MangaListFilter) 
 
 	// GROUP BY & ソート
 	query += "GROUP BY m.id\n"
-	query += "ORDER BY m.likes_count DESC\n"
+	if f.Sort != nil {
+		switch *f.Sort {
+		case "title_asc":
+			query += "ORDER BY m.title ASC\n"
+		case "title_desc":
+			query += "ORDER BY m.title DESC\n"
+		case "year_asc":
+			query += "ORDER BY m.published_year ASC\n"
+		case "year_desc":
+			query += "ORDER BY m.published_year DESC\n"
+		case "rating_asc":
+			query += "ORDER BY COALESCE(m.avg_rating, 0) ASC\n"
+		case "rating_desc":
+			query += "ORDER BY COALESCE(m.avg_rating, 0) DESC\n"
+		case "likes_asc":
+			query += "ORDER BY m.likes_count ASC\n"
+		case "likes_desc":
+			query += "ORDER BY m.likes_count DESC\n"
+		default:
+			query += "ORDER BY m.likes_count DESC\n"
+		}
+	}
 
 	// ページネーション (デフォルト値)
 	limit := f.Limit
@@ -133,7 +154,19 @@ func (r *MangaRepository) GetList(ctx context.Context, f model.MangaListFilter) 
 
 func (r *MangaRepository) GetDetail(ctx context.Context, slug string) (*model.MangaDetail, error) {
 	query := `
-		SELECT * FROM manga_detail_view
+		SELECT
+			slug,
+			title,
+			description,
+			cover_image,
+			published_year,
+			likes_count,
+			reviews_count,
+			COALESCE(avg_rating, 0) AS avg_rating,
+			authors,
+			genres,
+			tags
+		FROM manga_detail_view
 		WHERE slug = $1
 		LIMIT 1;
 	`

@@ -1,4 +1,7 @@
+'use client';
+
 import clsx from 'clsx';
+import { useState } from 'react';
 
 export type TabItem = {
   id: string;
@@ -8,13 +11,16 @@ export type TabItem = {
 
 type Props = {
   items: TabItem[];
-  value?: string;
-  onChange?: (id: string) => void;
+  initialActiveId?: string;
   className?: string;
 };
 
-export default function Tabs({ items, value, onChange, className }: Props) {
-  const activeId = value ?? items[0]?.id;
+export default function Tabs({ items, initialActiveId, className }: Props) {
+  const [activeId, setActiveId] = useState(initialActiveId ?? items[0]?.id);
+
+  const handleChange = (id: string) => {
+    setActiveId(id);
+  };
 
   return (
     <div className={clsx('w-full', className)}>
@@ -35,7 +41,7 @@ export default function Tabs({ items, value, onChange, className }: Props) {
                 'rounded-t-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors sm:px-4',
                 active ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600 hover:bg-slate-50 hover:text-blue-700'
               )}
-              onClick={() => onChange?.(item.id)}
+              onClick={() => handleChange(item.id)}
             >
               {item.label}
             </button>

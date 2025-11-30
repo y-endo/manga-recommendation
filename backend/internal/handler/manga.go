@@ -59,6 +59,9 @@ func (h *MangaHandler) GetList(c echo.Context) error {
 			filter.MinRating = &f
 		}
 	}
+	if v := q.Get("sort"); v != "" {
+		filter.Sort = &v
+	}
 	if v := q.Get("limit"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil {
 			filter.Limit = n

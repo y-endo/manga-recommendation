@@ -16,7 +16,7 @@ export interface MangaListItem {
   title: string;
   author: string;
   cover_image: string | null;
-  genre: string[];
+  genres: string[];
   tags: string[];
   likes_count: number;
   avg_rating: number;
@@ -88,6 +88,24 @@ export interface MangaListResponse {
 // 漫画詳細レスポンス型
 export interface MangaDetailResponse {
   data: MangaDetail;
+  message: string;
+}
+
+// 漫画ジャンルレスポンス型
+export interface MangaGenreListResponse {
+  data: {
+    id: number;
+    name: string;
+  }[];
+  message: string;
+}
+
+// 漫画タグレスポンス型
+export interface MangaTagListResponse {
+  data: {
+    id: number;
+    name: string;
+  }[];
   message: string;
 }
 
